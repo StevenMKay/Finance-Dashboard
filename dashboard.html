@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Finance Dashboard</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Finance Dashboard</span>
+    </div>
+    <div class="user">
+      <span class="email" id="hdr-email">—</span>
+      <button id="btn-signout" class="btn btn-sm btn-ghost" title="Sign out">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>Sign out</span>
+      </button>
+    </div>
+  </header>
+  <div class="gradient-bar"></div>
+
+  <main class="app-main">
+    <!-- TradingView Ticker Tape (your watchlist) -->
+    <div class="tv-ticker-tape" id="tv-ticker-tape"></div>
+
+    <!-- Tabs -->
+    <nav class="tabbar" role="tablist" aria-label="Sections">
+      <button data-tab="overview"   class="active" role="tab"><i class="fa-solid fa-gauge-high"></i><span class="lbl">Overview</span></button>
+      <button data-tab="watchlist"  role="tab"><i class="fa-solid fa-eye"></i><span class="lbl">Watchlist</span></button>
+      <button data-tab="holdings"   role="tab"><i class="fa-solid fa-briefcase"></i><span class="lbl">Holdings</span></button>
+      <button data-tab="accounts"   role="tab"><i class="fa-solid fa-piggy-bank"></i><span class="lbl">Accounts</span></button>
+      <button data-tab="salary"     role="tab"><i class="fa-solid fa-sack-dollar"></i><span class="lbl">Salary</span></button>
+      <button data-tab="calculator" role="tab"><i class="fa-solid fa-calculator"></i><span class="lbl">What-if</span></button>
+      <button data-tab="settings"   role="tab" title="Settings"><i class="fa-solid fa-gear"></i><span class="lbl">Settings</span></button>
+    </nav>
+
+    <!-- ============= OVERVIEW ============= -->
+    <section id="tab-overview" class="tab-panel active" role="tabpanel">
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi"><div class="label">Net Worth</div><div class="value" id="kpi-net">$0</div><div class="delta muted">Accounts + Holdings</div></div>
+        <div class="kpi up"><div class="label">Today's P/L</div><div class="value" id="kpi-day">$0</div><div class="delta muted" id="kpi-day-pct">0.00%</div></div>
+        <div class="kpi"><div class="label">Cash %</div><div class="value" id="kpi-cash">0%</div><div class="delta muted" id="kpi-cash-sub">of net worth</div></div>
+        <div class="kpi"><div class="label">Holdings Value</div><div class="value" id="kpi-hold">$0</div><div class="delta muted" id="kpi-hold-sub">across 0 positions</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Allocation</h2>
+            <div class="card-sub">By account type + stock holdings (live market value)</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" id="btn-refresh-now"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="split-grid">
+          <div><canvas id="allocChart" height="220"></canvas></div>
+          <div id="alloc-legend" class="results-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Market overview</h2></div>
+        <div class="tv-shell" id="tv-market-overview"></div>
+      </div>
+    </section>
+
+    <!-- ============= WATCHLIST ============= -->
+    <section id="tab-watchlist" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Watchlist</h2><div class="card-sub">Live prices refresh every 30s while this tab is open.</div></div>
+        </div>
+        <div class="form-grid" style="margin-bottom: 16px;">
+          <div class="field">
+            <label for="wl-symbol">Add symbol</label>
+            <input id="wl-symbol" class="input" type="text" placeholder="AAPL" maxlength="12" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="wl-add" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add to watchlist</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="wl-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th class="num">Price</th>
+                <th class="num">Day Δ</th>
+                <th class="num">Day %</th>
+                <th class="num">Open</th>
+                <th class="num">High</th>
+                <th class="num">Low</th>
+                <th class="num">Prev close</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="wl-body"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="wl-empty" style="display:none;">
+          <i class="fa-regular fa-eye"></i>
+          No symbols yet. Add a ticker above to start tracking.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============= HOLDINGS ============= -->
+    <section id="tab-holdings" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Holdings</h2><div class="card-sub">Manual entry — shares + cost basis. Market values use live prices.</div></div>
+        </div>
+        <div class="form-grid" style="margin-bottom: 16px;">
+          <div class="field"><label for="h-sym">Symbol</label><input id="h-sym" class="input" placeholder="AAPL" maxlength="12" /></div>
+          <div class="field"><label for="h-sh">Shares</label><input id="h-sh" class="input input-money" type="number" min="0" step="0.0001" placeholder="100" /></div>
+          <div class="field"><label for="h-cb">Cost / share</label><input id="h-cb" class="input input-money" type="number" min="0" step="0.0001" placeholder="150.00" /></div>
+          <div class="field"><label for="h-acct">Account</label><select id="h-acct" class="select"><option value="">— none —</option></select></div>
+          <div class="field"><label>&nbsp;</label><button id="h-add" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add holding</button></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="h-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th class="num">Shares</th>
+                <th class="num">Cost / sh</th>
+                <th class="num">Price</th>
+                <th class="num">Market value</th>
+                <th class="num">Unrealized $</th>
+                <th class="num">Unrealized %</th>
+                <th class="num">% of port.</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="h-body"></tbody>
+            <tfoot>
+              <tr>
+                <td>Totals</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="num" id="h-tot-mv">$0</td>
+                <td class="num" id="h-tot-pl">$0</td>
+                <td class="num" id="h-tot-plp">0%</td>
+                <td class="num">100%</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="empty" id="h-empty" style="display:none;">
+          <i class="fa-regular fa-folder-open"></i>
+          No holdings yet. Add your first position above.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============= ACCOUNTS ============= -->
+    <section id="tab-accounts" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Accounts</h2><div class="card-sub">Manually entered balances. Edit inline.</div></div>
+        </div>
+        <div class="form-grid" style="margin-bottom: 16px;">
+          <div class="field"><label for="a-name">Account name</label><input id="a-name" class="input" placeholder="Main checking" maxlength="60" /></div>
+          <div class="field">
+            <label for="a-type">Type</label>
+            <select id="a-type" class="select">
+              <option value="checking">Checking</option>
+              <option value="savings">Savings</option>
+              <option value="brokerage">Brokerage</option>
+              <option value="retirement">Retirement (401k/IRA)</option>
+              <option value="cash">Cash</option>
+              <option value="crypto">Crypto</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label for="a-bal">Balance</label><input id="a-bal" class="input input-money" type="number" step="0.01" placeholder="0.00" /></div>
+          <div class="field"><label>&nbsp;</label><button id="a-add" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add account</button></div>
+        </div>
+        <div id="a-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;"></div>
+        <div class="empty" id="a-empty" style="display:none;">
+          <i class="fa-regular fa-rectangle-list"></i>
+          No accounts yet. Add one above.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============= SALARY PLANNER ============= -->
+    <section id="tab-salary" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Salary planner</h2><div class="card-sub">Live take-home + tax estimate. Saved automatically per user.</div></div>
+        </div>
+        <div class="split-grid">
+          <div>
+            <div class="form-grid">
+              <div class="field"><label for="sp-target">Target annual ($)</label><input id="sp-target" class="input input-money" type="number" step="500" /></div>
+              <div class="field"><label for="sp-current">Current annual ($)</label><input id="sp-current" class="input input-money" type="number" step="500" /></div>
+              <div class="field">
+                <label for="sp-filing">Filing status</label>
+                <select id="sp-filing" class="select">
+                  <option value="single">Single</option>
+                  <option value="mfj">Married filing jointly</option>
+                  <option value="hoh">Head of household</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="sp-state">State</label>
+                <select id="sp-state" class="select"></select>
+              </div>
+              <div class="field"><label for="sp-401k">401(k) %</label><input id="sp-401k" class="input input-money" type="number" min="0" max="50" step="0.5" /></div>
+              <div class="field"><label for="sp-health">Health (monthly $)</label><input id="sp-health" class="input input-money" type="number" min="0" step="10" /></div>
+            </div>
+            <p class="muted" style="font-size:11px; margin-top:12px;">
+              Rough estimate using 2025 federal brackets + FICA + a simple flat state rate. Not tax advice.
+            </p>
+          </div>
+          <div class="results-list" id="sp-results">
+            <div class="result-row big"><span class="lbl">Gross annual</span><span class="val" id="sp-gross">$0</span></div>
+            <div class="result-row"><span class="lbl">Federal tax (est.)</span><span class="val" id="sp-fed">$0</span></div>
+            <div class="result-row"><span class="lbl">FICA (SS + Medicare)</span><span class="val" id="sp-fica">$0</span></div>
+            <div class="result-row"><span class="lbl">State tax (est.)</span><span class="val" id="sp-state-tax">$0</span></div>
+            <div class="result-row"><span class="lbl">401(k) contribution</span><span class="val" id="sp-401k-amt">$0</span></div>
+            <div class="result-row"><span class="lbl">Health premiums</span><span class="val" id="sp-health-amt">$0</span></div>
+            <div class="result-row big"><span class="lbl">Take-home / year</span><span class="val" id="sp-net-y">$0</span></div>
+            <div class="result-row"><span class="lbl">Take-home / month</span><span class="val" id="sp-net-m">$0</span></div>
+            <div class="result-row"><span class="lbl">Take-home / biweekly</span><span class="val" id="sp-net-bw">$0</span></div>
+            <div class="result-row"><span class="lbl">Take-home / hour (40h/wk)</span><span class="val" id="sp-net-h">$0</span></div>
+            <div class="result-row" id="sp-gap-row"><span class="lbl">Gap to target</span><span class="val" id="sp-gap">$0</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============= CALCULATOR ============= -->
+    <section id="tab-calculator" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>What-if calculator</h2><div class="card-sub">Updates instantly as you type. Pulls current price from your watchlist/holdings if available.</div></div>
+        </div>
+        <div class="split-grid">
+          <div>
+            <div class="form-grid">
+              <div class="field"><label for="ci-sym">Symbol</label><input id="ci-sym" class="input" placeholder="AAPL" maxlength="12" list="ci-sym-list" /><datalist id="ci-sym-list"></datalist></div>
+              <div class="field"><label for="ci-cur">Current price ($)</label><input id="ci-cur" class="input input-money" type="number" step="0.01" /></div>
+              <div class="field"><label for="ci-tgt">Target price ($)</label><input id="ci-tgt" class="input input-money" type="number" step="0.01" /></div>
+              <div class="field"><label for="ci-sh">Shares</label><input id="ci-sh" class="input input-money" type="number" step="0.0001" /></div>
+              <div class="field"><label for="ci-fee">Total fees ($)</label><input id="ci-fee" class="input input-money" type="number" step="0.01" value="0" /></div>
+              <div class="field"><label for="ci-days">Hold period (days)</label><input id="ci-days" class="input input-money" type="number" step="1" min="0" value="365" /></div>
+            </div>
+            <p class="muted" style="font-size:11px; margin-top:12px;">
+              "Current price" auto-fills the latest cached quote when you enter a symbol. Edit it to model scenarios.
+            </p>
+          </div>
+          <div class="results-list">
+            <div class="result-row"><span class="lbl">Total cost</span><span class="val" id="ci-cost">$0</span></div>
+            <div class="result-row"><span class="lbl">Market value at target</span><span class="val" id="ci-mv">$0</span></div>
+            <div class="result-row big"><span class="lbl">Gain / loss</span><span class="val" id="ci-gain">$0</span></div>
+            <div class="result-row big"><span class="lbl">Return %</span><span class="val" id="ci-pct">0.00%</span></div>
+            <div class="result-row"><span class="lbl">Annualized return</span><span class="val" id="ci-ann">0.00%</span></div>
+            <div class="result-row"><span class="lbl">Break-even price (after fees)</span><span class="val" id="ci-be">$0</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============= SETTINGS ============= -->
+    <section id="tab-settings" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head"><h2>Settings &amp; backup</h2></div>
+        <p>Export all your data to a JSON file for safekeeping, or restore from a previous export.</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <button id="btn-export" class="btn btn-blue"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+          <label class="btn btn-ghost" for="file-import"><i class="fa-solid fa-file-import"></i> Import JSON</label>
+          <input id="file-import" type="file" accept="application/json" style="display:none" />
+        </div>
+        <hr style="border:none;border-top:1px solid var(--c-divider); margin: 24px 0;" />
+        <h3>Danger zone</h3>
+        <button id="btn-wipe" class="btn btn-ghost" style="color:var(--c-down); border-color:var(--c-down);"><i class="fa-solid fa-trash"></i> Delete all my data</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- TradingView Symbol modal -->
+  <div class="modal-backdrop" id="sym-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="sym-modal-title">Symbol</h3>
+        <button class="modal-close" id="sym-modal-close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="sym-modal-overview" class="tv-shell"></div>
+        <h3 style="margin-top:20px;">News</h3>
+        <div id="sym-modal-news" class="tv-shell"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-host"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- App scripts -->
+  <script src="/js/firebase-init.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/quotes.js"></script>
+  <script src="/js/tradingview.js"></script>
+  <script src="/js/tabs.js"></script>
+  <script src="/js/overview.js"></script>
+  <script src="/js/watchlist.js"></script>
+  <script src="/js/holdings.js"></script>
+  <script src="/js/accounts.js"></script>
+  <script src="/js/salary-planner.js"></script>
+  <script src="/js/calculator.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

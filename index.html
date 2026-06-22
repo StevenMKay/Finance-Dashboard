@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sign in — Finance Dashboard</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="head">
+        <i class="brand-icon fa-solid fa-chart-line"></i>
+        <h1>Finance Dashboard</h1>
+        <p>Live markets, holdings, salary planning</p>
+      </div>
+      <div class="auth-body">
+        <div class="auth-toggle" role="tablist">
+          <button id="tab-signin" class="active" type="button">Sign in</button>
+          <button id="tab-signup" type="button">Sign up</button>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" class="input" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" class="input" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+
+        <button id="btn-submit" class="btn btn-primary" type="button">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span id="submit-label">Sign in</span>
+        </button>
+
+        <div class="divider">or</div>
+
+        <button id="btn-google" class="btn btn-google" type="button">
+          <i class="fa-brands fa-google"></i>
+          Continue with Google
+        </button>
+
+        <div id="auth-msg" class="auth-msg" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat v10 — matches the existing site) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script src="/js/firebase-init.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Sign-in / sign-up page boot
+    (function () {
+      var tabSignin = document.getElementById('tab-signin');
+      var tabSignup = document.getElementById('tab-signup');
+      var submitLbl = document.getElementById('submit-label');
+      var passInput = document.getElementById('password');
+      var mode = 'signin';
+
+      function setMode(m) {
+        mode = m;
+        tabSignin.classList.toggle('active', m === 'signin');
+        tabSignup.classList.toggle('active', m === 'signup');
+        submitLbl.textContent = m === 'signin' ? 'Sign in' : 'Create account';
+        passInput.setAttribute('autocomplete', m === 'signin' ? 'current-password' : 'new-password');
+      }
+      tabSignin.addEventListener('click', function () { setMode('signin'); });
+      tabSignup.addEventListener('click', function () { setMode('signup'); });
+
+      var emailInput = document.getElementById('email');
+      var msgBox = document.getElementById('auth-msg');
+      function showMsg(text, kind) {
+        msgBox.textContent = text || '';
+        msgBox.className = 'auth-msg ' + (kind || '');
+      }
+
+      document.getElementById('btn-submit').addEventListener('click', async function () {
+        var email = emailInput.value.trim();
+        var pwd = passInput.value;
+        if (!email || !pwd) { showMsg('Email and password are required.', 'err'); return; }
+        showMsg('Working…');
+        try {
+          if (mode === 'signin') {
+            await FinanceAuth.signInEmail(email, pwd);
+          } else {
+            await FinanceAuth.signUpEmail(email, pwd);
+          }
+          showMsg('Success — redirecting…', 'ok');
+          window.location.href = '/dashboard.html';
+        } catch (e) {
+          showMsg(FinanceAuth.prettyError(e), 'err');
+        }
+      });
+
+      document.getElementById('btn-google').addEventListener('click', async function () {
+        showMsg('Opening Google…');
+        try {
+          await FinanceAuth.signInGoogle();
+          showMsg('Success — redirecting…', 'ok');
+          window.location.href = '/dashboard.html';
+        } catch (e) {
+          showMsg(FinanceAuth.prettyError(e), 'err');
+        }
+      });
+
+      // If already signed in, bounce to dashboard
+      firebase.auth().onAuthStateChanged(function (u) {
+        if (u) window.location.href = '/dashboard.html';
+      });
+    })();
+  </script>
+</body>
+</html>

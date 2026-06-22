@@ -1,0 +1,495 @@
+/* ============================================================
+   Finance Dashboard — design tokens lifted from PMSite.html
+   Navy header + purple/orange/red gradient bar + green primary
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --c-header:        #1a2744;
+  --c-grad-1:        #8e44ad;
+  --c-grad-2:        #f39c12;
+  --c-grad-3:        #e74c3c;
+
+  /* Surfaces */
+  --c-bg:            #f1f3f6;
+  --c-bg-soft:       #f8f9fa;
+  --c-card:          #ffffff;
+  --c-border:        #d0d5dd;
+  --c-border-soft:   #e9ecef;
+  --c-divider:       #e2e8f0;
+
+  /* Text */
+  --c-text:          #1a202c;
+  --c-text-soft:     #4a5568;
+  --c-text-muted:    #718096;
+  --c-text-onDark:   #f8f9fa;
+
+  /* Actions */
+  --c-primary:       #27ae60;
+  --c-primary-hover: #219a52;
+  --c-blue:          #2980b9;
+  --c-blue-hover:    #1f6391;
+
+  /* Status */
+  --c-up:            #2f9e44;
+  --c-up-bg:         rgba(56, 161, 105, 0.12);
+  --c-down:          #c0392b;
+  --c-down-bg:       rgba(229, 62, 62, 0.10);
+  --c-warn:          #dd6b20;
+  --c-warn-bg:       rgba(221, 107, 32, 0.12);
+
+  /* Radius / shadow */
+  --r-sm: 4px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 6px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  /* Spacing scale */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 48px;
+
+  /* Layout */
+  --header-h: 56px;
+  --grad-bar-h: 4px;
+  --container-max: 1400px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--c-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3, h4 { margin: 0 0 var(--s-3); color: var(--c-text); }
+h1 { font-size: 28px; font-weight: 700; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 600; }
+h4 { font-size: 14px; font-weight: 600; color: var(--c-text-soft); text-transform: uppercase; letter-spacing: 0.3px; }
+
+button { font-family: inherit; }
+
+/* ============================================================
+   App shell
+   ============================================================ */
+.app-header {
+  background: var(--c-header);
+  color: var(--c-text-onDark);
+  padding: 0 var(--s-5);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 600;
+}
+.app-header .brand {
+  display: flex; align-items: center; gap: var(--s-3);
+  font-size: 16px; font-weight: 700; letter-spacing: 0.2px;
+}
+.app-header .brand i { color: var(--c-grad-2); }
+.app-header .user {
+  display: flex; align-items: center; gap: var(--s-3);
+  font-size: 13px; color: #cbd5e1;
+}
+.app-header .user .email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.gradient-bar {
+  height: var(--grad-bar-h);
+  background: linear-gradient(90deg, var(--c-grad-1) 0%, var(--c-grad-2) 50%, var(--c-grad-3) 100%);
+  position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 599;
+}
+
+.app-main {
+  padding: calc(var(--header-h) + var(--grad-bar-h) + var(--s-5)) var(--s-5) var(--s-7);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+.tabbar {
+  display: flex; gap: var(--s-2);
+  background: var(--c-card);
+  padding: var(--s-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-1);
+  margin-bottom: var(--s-5);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tabbar button {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--c-text-soft);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.tabbar button:hover { background: var(--c-bg-soft); color: var(--c-text); }
+.tabbar button.active {
+  background: var(--c-header);
+  color: var(--c-text-onDark);
+  border-color: var(--c-header);
+}
+.tabbar button i { font-size: 13px; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.25s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+.card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-1);
+  margin-bottom: var(--s-5);
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--s-4);
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.card-head h2, .card-head h3 { margin: 0; }
+.card-sub { color: var(--c-text-muted); font-size: 12px; margin-top: 2px; }
+
+/* KPI tile grid (Overview) */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+.kpi {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-blue);
+  border-radius: var(--r-md);
+  padding: var(--s-4) var(--s-5);
+  box-shadow: var(--shadow-1);
+}
+.kpi .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
+.kpi .value { font-size: 26px; font-weight: 700; margin-top: 4px; color: var(--c-text); }
+.kpi .delta { font-size: 12px; font-weight: 600; margin-top: 2px; }
+.kpi.up    { border-left-color: var(--c-up); }
+.kpi.down  { border-left-color: var(--c-down); }
+.kpi.warn  { border-left-color: var(--c-warn); }
+
+/* ============================================================
+   Buttons & form controls
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--s-2);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+}
+.btn:hover { background: #e5e9ee; }
+.btn-primary {
+  background: var(--c-primary);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--c-primary-hover); }
+.btn-blue {
+  background: var(--c-blue); color: #fff;
+}
+.btn-blue:hover { background: var(--c-blue-hover); }
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text-soft);
+  border-color: var(--c-border);
+}
+.btn-ghost:hover { background: var(--c-bg-soft); color: var(--c-text); }
+.btn-danger {
+  background: transparent;
+  color: var(--c-down);
+  border-color: transparent;
+  padding: 6px 8px;
+}
+.btn-danger:hover { background: var(--c-down-bg); }
+.btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+.input, .select, textarea.input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-card);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input:focus, .select:focus, textarea.input:focus {
+  outline: none;
+  border-color: var(--c-blue);
+  box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.18);
+}
+.input.input-money { text-align: right; font-variant-numeric: tabular-nums; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--c-text-muted); }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s-3);
+  align-items: end;
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.table th, .table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--c-divider);
+}
+.table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--c-text-muted);
+  background: var(--c-bg-soft);
+  position: sticky; top: 0;
+}
+.table tbody tr:hover { background: var(--c-bg-soft); }
+.table .num { text-align: right; }
+.table .sym { font-weight: 700; letter-spacing: 0.3px; }
+.table tfoot td {
+  font-weight: 700;
+  background: var(--c-bg-soft);
+  border-top: 2px solid var(--c-border);
+}
+
+.up    { color: var(--c-up); }
+.down  { color: var(--c-down); }
+.muted { color: var(--c-text-muted); }
+
+.pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px;
+  background: rgba(49, 130, 206, 0.18);
+  color: #1a56a0;
+}
+.pill.up   { background: var(--c-up-bg);   color: var(--c-up); }
+.pill.down { background: var(--c-down-bg); color: var(--c-down); }
+.pill.warn { background: var(--c-warn-bg); color: var(--c-warn); }
+
+/* ============================================================
+   Auth (sign-in landing)
+   ============================================================ */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--s-5);
+  background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 100%);
+}
+.auth-card {
+  background: var(--c-card);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  max-width: 420px; width: 100%;
+  overflow: hidden;
+}
+.auth-card .head {
+  background: var(--c-header);
+  color: var(--c-text-onDark);
+  padding: var(--s-5);
+  text-align: center;
+}
+.auth-card .head h1 { color: #fff; font-size: 22px; margin-bottom: 4px; }
+.auth-card .head p  { margin: 0; color: #cbd5e1; font-size: 13px; }
+.auth-card .head i.brand-icon { color: var(--c-grad-2); font-size: 28px; margin-bottom: var(--s-2); display: block; }
+.auth-body { padding: var(--s-5); display: flex; flex-direction: column; gap: var(--s-3); }
+.auth-body .divider {
+  display: flex; align-items: center; gap: var(--s-2);
+  color: var(--c-text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  margin: var(--s-2) 0;
+}
+.auth-body .divider::before, .auth-body .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--c-divider);
+}
+.auth-toggle {
+  display: flex; gap: var(--s-2); margin-bottom: var(--s-2);
+}
+.auth-toggle button {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--c-bg-soft);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--c-text-soft);
+}
+.auth-toggle button.active { background: var(--c-header); color: #fff; border-color: var(--c-header); }
+.btn-google {
+  background: #fff; color: #1a202c; border: 1px solid var(--c-border);
+}
+.btn-google:hover { background: var(--c-bg-soft); }
+.btn-google i { color: #ea4335; }
+
+.auth-msg { font-size: 12px; min-height: 16px; }
+.auth-msg.err { color: var(--c-down); }
+.auth-msg.ok  { color: var(--c-up); }
+
+/* ============================================================
+   Toasts
+   ============================================================ */
+#toast-host {
+  position: fixed; bottom: 16px; right: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 9000;
+}
+.toast {
+  background: var(--c-header); color: #fff;
+  padding: 10px 14px; border-radius: var(--r-md);
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-2);
+  animation: fadeIn 0.2s ease;
+  max-width: 340px;
+}
+.toast.ok   { background: var(--c-up); }
+.toast.err  { background: var(--c-down); }
+.toast.warn { background: var(--c-warn); }
+
+/* ============================================================
+   Modal
+   ============================================================ */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: none; align-items: center; justify-content: center;
+  z-index: 800;
+  padding: var(--s-4);
+}
+.modal-backdrop.open { display: flex; animation: fadeIn 0.18s ease; }
+.modal {
+  background: var(--c-card);
+  border-radius: var(--r-lg);
+  width: 100%; max-width: 720px;
+  max-height: 90vh; overflow: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--c-divider);
+}
+.modal-head h3 { margin: 0; }
+.modal-body { padding: var(--s-5); }
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--c-text-muted); font-size: 18px;
+}
+
+/* ============================================================
+   TradingView widget shells
+   ============================================================ */
+.tv-shell { background: #fff; border-radius: var(--r-md); padding: 4px; }
+.tv-ticker-tape { margin-bottom: var(--s-5); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-1); background: #131722; }
+
+/* ============================================================
+   Empty / loading states
+   ============================================================ */
+.empty {
+  text-align: center;
+  padding: var(--s-7) var(--s-5);
+  color: var(--c-text-muted);
+}
+.empty i { font-size: 28px; display: block; margin-bottom: var(--s-2); color: var(--c-border); }
+
+.skeleton {
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--r-sm);
+  color: transparent;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+/* ============================================================
+   Salary planner / calculator layout
+   ============================================================ */
+.split-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: var(--s-5);
+}
+.results-list { display: flex; flex-direction: column; gap: var(--s-3); }
+.result-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: var(--s-3) var(--s-4);
+  background: var(--c-bg-soft);
+  border-radius: var(--r-sm);
+}
+.result-row .lbl { color: var(--c-text-soft); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.result-row .val { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.result-row.big .val { font-size: 22px; }
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+@media (max-width: 768px) {
+  .app-header { padding: 0 var(--s-3); }
+  .app-header .brand { font-size: 14px; }
+  .app-header .user .email { display: none; }
+  .app-main { padding-left: var(--s-3); padding-right: var(--s-3); }
+  .card { padding: var(--s-4); }
+  .kpi { padding: var(--s-3) var(--s-4); }
+  .kpi .value { font-size: 22px; }
+  .split-grid { grid-template-columns: 1fr; }
+  .tabbar { position: sticky; top: calc(var(--header-h) + var(--grad-bar-h)); z-index: 500; }
+  .tabbar button .lbl { display: none; }
+  .tabbar button i { font-size: 15px; }
+  .modal { max-height: 95vh; }
+  .table { font-size: 12px; }
+  .table th, .table td { padding: 8px 10px; }
+}
+@media (max-width: 480px) {
+  h1 { font-size: 22px; }
+  h2 { font-size: 18px; }
+  .kpi .value { font-size: 20px; }
+}

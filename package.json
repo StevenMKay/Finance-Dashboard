@@ -1,0 +1,13 @@
+{
+  "name": "finance-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal finance & stocks dashboard — live quotes, holdings, accounts, salary planner, what-if calculator.",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
