@@ -3,13 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Strategy Backtester</title>
+  <title>Strategy Lab — Finance Dashboard</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    /* Page-local helpers that don't exist in style.css yet.
-       Keeping them here so the global stylesheet isn't touched. */
+    /* Page-local helpers. Kept here so /css/style.css stays untouched. */
     .bt-banner {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 14px;
@@ -21,9 +20,11 @@
       margin-bottom: var(--s-4);
     }
     .bt-banner i { font-size: 14px; }
-    .bt-pl-pos { color: var(--c-up); font-weight: 700; }
+    .bt-banner.bt-info { background: rgba(41,128,185,0.10); color: var(--c-blue); border-color: var(--c-blue); }
+
+    .bt-pl-pos { color: var(--c-up);   font-weight: 700; }
     .bt-pl-neg { color: var(--c-down); font-weight: 700; }
-    .bt-pl-flat { color: var(--c-text-muted); }
+    .bt-pl-flat{ color: var(--c-text-muted); }
     .bt-pill {
       display: inline-block;
       padding: 2px 8px;
@@ -34,7 +35,9 @@
     }
     .bt-pill-up   { background: var(--c-up-bg);   color: var(--c-up); }
     .bt-pill-down { background: var(--c-down-bg); color: var(--c-down); }
+    .bt-pill-flat { background: var(--c-warn-bg); color: var(--c-warn); }
     .bt-pill-none { background: var(--c-bg-soft); color: var(--c-text-muted); }
+
     .bt-loading {
       display: none;
       align-items: center; gap: 8px;
@@ -44,6 +47,7 @@
     .bt-loading.show { display: inline-flex; }
     .bt-loading i { animation: bt-spin 1s linear infinite; }
     @keyframes bt-spin { from {transform: rotate(0)} to {transform: rotate(360deg)} }
+
     .bt-error {
       display: none;
       padding: 10px 14px;
@@ -55,11 +59,142 @@
       margin-bottom: var(--s-4);
     }
     .bt-error.show { display: block; }
-    .bt-trade-controls {
-      display: flex; gap: 12px; flex-wrap: wrap;
-      margin-bottom: var(--s-3);
-      align-items: end;
+
+    /* Chip multi-select — used for targets, stops, axes, compare tickers */
+    .bt-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .bt-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--c-border);
+      border-radius: 999px;
+      background: var(--c-card);
+      font-size: 12px; font-weight: 600;
+      color: var(--c-text-soft);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
     }
+    .bt-chip:hover { background: var(--c-bg-soft); }
+    .bt-chip.on {
+      background: var(--c-header);
+      color: var(--c-text-onDark);
+      border-color: var(--c-header);
+    }
+    .bt-chip-remove { font-size: 10px; opacity: 0.8; }
+
+    .bt-progress {
+      width: 100%; height: 10px; background: var(--c-bg-soft);
+      border-radius: 999px; overflow: hidden;
+      border: 1px solid var(--c-border);
+    }
+    .bt-progress > div {
+      height: 100%;
+      background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+    .bt-progress-row {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 12px; color: var(--c-text-muted);
+      margin-top: 8px;
+    }
+    .bt-progress-row > .bar { flex: 1; }
+
+    /* Heatmap & charts grid */
+    .bt-chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: var(--s-4);
+    }
+    .bt-chart-card {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-radius: var(--r-md);
+      padding: var(--s-4);
+      box-shadow: var(--shadow-1);
+    }
+    .bt-chart-card h3 { font-size: 13px; color: var(--c-text-muted); margin-bottom: 8px; }
+    .bt-chart-card canvas { width: 100% !important; height: 240px !important; }
+
+    /* Calendar */
+    .bt-cal {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      font-size: 11px;
+    }
+    .bt-cal-cell {
+      aspect-ratio: 1.4;
+      border-radius: 4px;
+      background: var(--c-bg-soft);
+      border: 1px solid var(--c-border-soft);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      color: var(--c-text-muted);
+      cursor: default;
+    }
+    .bt-cal-cell.has-trade { color: white; font-weight: 700; cursor: help; }
+    .bt-cal-cell .d { font-size: 10px; }
+
+    /* Replay layout */
+    .bt-replay-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--s-4);
+    }
+    @media (max-width: 900px) { .bt-replay-grid { grid-template-columns: 1fr; } }
+    #bt-replay-chart { height: 380px; width: 100%; }
+    .bt-replay-controls {
+      display: flex; gap: 8px; align-items: center;
+      margin-top: 8px; flex-wrap: wrap;
+    }
+    .bt-replay-controls input[type=range] { flex: 1; min-width: 160px; }
+    .bt-narrative {
+      background: var(--c-bg-soft);
+      border: 1px solid var(--c-border);
+      border-radius: var(--r-sm);
+      padding: var(--s-4);
+      font-size: 13px;
+    }
+    .bt-narrative .step {
+      padding: 8px 10px;
+      border-left: 3px solid var(--c-border);
+      margin-bottom: 8px;
+      background: var(--c-card);
+      border-radius: var(--r-sm);
+    }
+    .bt-narrative .step.active { border-left-color: var(--c-grad-2); box-shadow: 0 0 0 2px var(--c-warn-bg); }
+    .bt-narrative .step.done   { border-left-color: var(--c-up); }
+
+    /* AI lab */
+    .bt-ai-bullet {
+      display: flex; gap: 10px;
+      padding: 10px 12px;
+      background: var(--c-bg-soft);
+      border-left: 3px solid var(--c-blue);
+      border-radius: var(--r-sm);
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .bt-ai-bullet i { color: var(--c-blue); margin-top: 2px; }
+
+    /* KPI tiles inside the lab (Monte Carlo / Best settings) */
+    .bt-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--s-3);
+      margin-bottom: var(--s-4);
+    }
+    .bt-kpi {
+      background: var(--c-card);
+      border: 1px solid var(--c-border);
+      border-left: 3px solid var(--c-grad-2);
+      border-radius: var(--r-md);
+      padding: var(--s-3) var(--s-4);
+      box-shadow: var(--shadow-1);
+    }
+    .bt-kpi .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
+    .bt-kpi .value { font-size: 20px; font-weight: 700; margin-top: 2px; color: var(--c-text); }
   </style>
 </head>
 <body>
@@ -70,202 +205,712 @@
     </div>
     <div class="user">
       <a href="/dashboard.html" class="btn btn-sm btn-ghost" title="Back to dashboard">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Dashboard</span>
+        <i class="fa-solid fa-arrow-left"></i><span>Dashboard</span>
       </a>
       <span class="email" id="hdr-email">—</span>
       <button id="btn-signout" class="btn btn-sm btn-ghost" title="Sign out">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Sign out</span>
+        <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Sign out</span>
       </button>
     </div>
   </header>
   <div class="gradient-bar"></div>
 
   <main class="app-main">
-    <div class="card">
-      <div class="card-head">
+    <div class="card" style="margin-bottom: var(--s-4);">
+      <div class="card-head" style="margin-bottom: 0;">
         <div>
-          <h2>Strategy Backtester</h2>
-          <div class="card-sub">First-hour trend strategy with profit-target exits. Market hours only (9:30–4:00 ET).</div>
+          <h2><i class="fa-solid fa-flask"></i> Strategy Lab</h2>
+          <div class="card-sub">First-hour trend strategy laboratory — engine, optimizer, charts, replay, Monte Carlo, AI.</div>
         </div>
       </div>
-
-      <!-- Mock-data notice. Remove this banner once a real backend is wired in. -->
-      <div class="bt-banner" id="bt-mock-banner">
-        <i class="fa-solid fa-flask"></i>
-        <span>
-          <strong>Mock data mode.</strong>
-          Results are generated from synthetic price data so you can preview the UI and strategy.
-          Connect a real data API in <code>/js/backtester.js</code> &rarr; <code>fetchCandles()</code> to use live history.
-        </span>
-      </div>
-
-      <div class="bt-error" id="bt-error"></div>
-
-      <div class="form-grid">
-        <div class="field">
-          <label for="bt-tickers">Tickers (comma-separated)</label>
-          <input id="bt-tickers" class="input" type="text" value="AMD, NVDA, TSLA" placeholder="AMD, NVDA, TSLA" />
-        </div>
-        <div class="field">
-          <label for="bt-trend-window">First-hour window (minutes)</label>
-          <input id="bt-trend-window" class="input input-money" type="number" min="5" step="5" value="60" />
-        </div>
-        <div class="field">
-          <label for="bt-dip">Dip trigger (%)</label>
-          <input id="bt-dip" class="input input-money" type="number" min="0.1" step="0.1" value="3" />
-        </div>
-        <div class="field">
-          <label for="bt-target-1">Profit target #1 (%)</label>
-          <input id="bt-target-1" class="input input-money" type="number" min="0.1" step="0.1" value="0.5" />
-        </div>
-        <div class="field">
-          <label for="bt-target-2">Profit target #2 (%)</label>
-          <input id="bt-target-2" class="input input-money" type="number" min="0.1" step="0.1" value="1" />
-        </div>
-        <div class="field">
-          <label for="bt-interval">Candle interval</label>
-          <select id="bt-interval" class="select">
-            <option value="1m">1m</option>
-            <option value="5m" selected>5m</option>
-            <option value="15m">15m</option>
-            <option value="30m">30m</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="bt-period">Period</label>
-          <select id="bt-period" class="select">
-            <option value="30d">30d</option>
-            <option value="60d" selected>60d</option>
-            <option value="90d">90d</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="bt-run" class="btn btn-primary">
-            <i class="fa-solid fa-play"></i> Run backtest
-          </button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <span class="bt-loading" id="bt-loading">
-            <i class="fa-solid fa-spinner"></i> Running backtest…
-          </span>
-        </div>
-      </div>
-      <p class="muted" style="font-size:11px; margin-top:12px;">
-        Strategy: at the end of the first-hour window, compare price vs. open.
-        Trending up &rarr; buy at first-hour close, exit at target % or end-of-day.
-        Trending down &rarr; wait for a dip of the configured % below the open; if hit, buy there
-        and exit on a rebound of the target % or at end-of-day. If the dip never hits, the day is a no-trade.
-      </p>
     </div>
 
-    <!-- Summary results: one row per ticker × target -->
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <h2>Summary</h2>
-          <div class="card-sub">One row per ticker / profit target.</div>
+    <!-- Global error / mock banners (visible on every tab) -->
+    <div class="bt-banner" id="bt-mock-banner" style="display:none;">
+      <i class="fa-solid fa-flask"></i>
+      <span>
+        <strong>Mock data mode.</strong>
+        Server has no Polygon key configured<span data-reason></span>, so the page is using synthetic candles.
+        Set <code>POLYGON_API_KEY</code> on the server to switch to live history.
+      </span>
+    </div>
+    <div class="bt-error" id="bt-error"></div>
+
+    <!-- ============= TABS ============= -->
+    <nav class="tabbar" role="tablist" aria-label="Lab sections">
+      <button data-tab="engine"     class="active" role="tab"><i class="fa-solid fa-play"></i><span class="lbl">Engine</span></button>
+      <button data-tab="optimizer"  role="tab"><i class="fa-solid fa-sliders"></i><span class="lbl">Optimizer</span></button>
+      <button data-tab="heatmap"    role="tab"><i class="fa-solid fa-th"></i><span class="lbl">Heatmap</span></button>
+      <button data-tab="charts"     role="tab"><i class="fa-solid fa-chart-area"></i><span class="lbl">Charts</span></button>
+      <button data-tab="replay"     role="tab"><i class="fa-solid fa-clapperboard"></i><span class="lbl">Replay</span></button>
+      <button data-tab="compare"    role="tab"><i class="fa-solid fa-scale-balanced"></i><span class="lbl">Compare</span></button>
+      <button data-tab="montecarlo" role="tab"><i class="fa-solid fa-dice"></i><span class="lbl">Monte Carlo</span></button>
+      <button data-tab="planner"    role="tab"><i class="fa-solid fa-sack-dollar"></i><span class="lbl">Investment Planner</span></button>
+      <button data-tab="ai"         role="tab"><i class="fa-solid fa-brain"></i><span class="lbl">AI Lab</span></button>
+    </nav>
+
+    <!-- ===================================================================
+         ENGINE TAB
+         =================================================================== -->
+    <section id="tab-engine" class="tab-panel active" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Single-strategy backtest</h2>
+            <div class="card-sub">Configure once, run for every selected target. Stop loss and slippage optional.</div>
+          </div>
+          <span class="bt-loading" id="bt-loading"><i class="fa-solid fa-spinner"></i> Running…</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="bt-tickers">Tickers (comma-separated)</label>
+            <input id="bt-tickers" class="input" type="text" value="AMD, NVDA, TSLA" placeholder="AMD, NVDA, TSLA" />
+          </div>
+          <div class="field">
+            <label for="bt-trend-window">First-hour window (min)</label>
+            <input id="bt-trend-window" class="input input-money" type="number" min="5" step="5" value="60" />
+          </div>
+          <div class="field">
+            <label for="bt-dip">Dip trigger (%)</label>
+            <input id="bt-dip" class="input input-money" type="number" min="0.1" step="0.1" value="3" />
+          </div>
+          <div class="field">
+            <label>Profit targets (%)</label>
+            <div class="bt-chips" id="bt-targets" data-default="0.5,1"></div>
+            <div style="margin-top:4px; display:flex; gap:4px;">
+              <input id="bt-target-input" class="input input-money" type="number" min="0.05" step="0.05" placeholder="add…" style="max-width:90px;" />
+              <button class="btn btn-sm" id="bt-target-add"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Stop losses (%) — none to disable</label>
+            <div class="bt-chips" id="bt-stops"></div>
+            <div style="margin-top:4px; display:flex; gap:4px;">
+              <input id="bt-stop-input" class="input input-money" type="number" min="0.05" step="0.05" placeholder="add…" style="max-width:90px;" />
+              <button class="btn btn-sm" id="bt-stop-add"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="bt-slippage">Slippage (bps)</label>
+            <input id="bt-slippage" class="input input-money" type="number" min="0" step="0.5" value="0" />
+          </div>
+          <div class="field">
+            <label for="bt-interval">Candle interval</label>
+            <select id="bt-interval" class="select">
+              <option value="1m">1m</option>
+              <option value="5m" selected>5m</option>
+              <option value="15m">15m</option>
+              <option value="30m">30m</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bt-period">Period</label>
+            <select id="bt-period" class="select">
+              <option value="30d">30d</option>
+              <option value="60d" selected>60d</option>
+              <option value="90d">90d</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="bt-run" class="btn btn-primary"><i class="fa-solid fa-play"></i> Run backtest</button>
+          </div>
+        </div>
+        <p class="muted" style="font-size:11px; margin-top:12px;">
+          Strategy: at the end of the first-hour window, compare price vs. open.
+          Trending up → buy at first-hour close, exit at target / stop / EOD.
+          Trending down → wait for dip below open; if hit, buy there and exit on rebound / stop / EOD.
+          Slippage (bps) widens fills conservatively (1 bp = 0.01%).
+        </p>
+      </div>
+
+      <!-- Summary table -->
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Summary</h2><div class="card-sub">One row per ticker × (target × stop).</div></div>
+          <button id="bt-export-csv" class="btn btn-sm btn-ghost" disabled><i class="fa-solid fa-file-csv"></i> Export trades CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="bt-summary-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th class="num">Target %</th>
+                <th class="num">Stop %</th>
+                <th class="num">Total days</th>
+                <th class="num">Trades</th>
+                <th class="num">No-trade</th>
+                <th class="num">Wins</th>
+                <th class="num">Losses</th>
+                <th class="num">Win rate</th>
+                <th class="num">Avg P/L</th>
+                <th class="num">Total P/L</th>
+                <th class="num">Profit factor</th>
+                <th class="num">Best day</th>
+                <th class="num">Worst day</th>
+                <th class="num">Avg hold</th>
+                <th class="num">Avg MFE</th>
+                <th class="num">Avg MAE</th>
+                <th class="num">Max DD</th>
+              </tr>
+            </thead>
+            <tbody id="bt-summary-body"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="bt-summary-empty"><i class="fa-regular fa-square-check"></i>Run a backtest to see summary stats.</div>
+      </div>
+
+      <!-- Trade detail -->
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Trade detail</h2><div class="card-sub">Every simulated day across every ticker / target / stop.</div></div>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:var(--s-3);">
+          <div class="field"><label for="bt-filter-ticker">Ticker</label><select id="bt-filter-ticker" class="select"><option value="">All</option></select></div>
+          <div class="field"><label for="bt-filter-target">Target</label><select id="bt-filter-target" class="select"><option value="">All</option></select></div>
+          <div class="field"><label for="bt-filter-stop">Stop</label><select id="bt-filter-stop" class="select"><option value="">All</option></select></div>
+          <div class="field"><label for="bt-filter-type">Trade type</label>
+            <select id="bt-filter-type" class="select">
+              <option value="">All</option>
+              <option value="up">Trending up</option>
+              <option value="down">Trending down</option>
+              <option value="none">No trade</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="bt-trades-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Ticker</th>
+                <th class="num">Tgt</th>
+                <th class="num">Stop</th>
+                <th>Type</th>
+                <th class="num">Open</th>
+                <th class="num">High</th>
+                <th class="num">Low</th>
+                <th class="num">Close</th>
+                <th class="num">1h close</th>
+                <th class="num">Buy</th>
+                <th class="num">Sell</th>
+                <th class="num">P/L %</th>
+                <th class="num">Hold</th>
+                <th class="num">Max gain</th>
+                <th class="num">Max loss</th>
+                <th>Exit</th>
+                <th>Target hit?</th>
+              </tr>
+            </thead>
+            <tbody id="bt-trades-body"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="bt-trades-empty"><i class="fa-regular fa-rectangle-list"></i>No trades yet.</div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         OPTIMIZER TAB
+         =================================================================== -->
+    <section id="tab-optimizer" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Strategy optimizer</h2><div class="card-sub">Grid-search every combination across selected axes. Runs in a Web Worker.</div></div>
+        </div>
+
+        <div class="bt-banner bt-info" id="bt-opt-fallback" style="display:none;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span><strong>Web Workers unavailable.</strong> Falling back to main-thread mode — the UI may briefly freeze on large grids.</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="bt-opt-tickers">Tickers (comma-separated)</label>
+            <input id="bt-opt-tickers" class="input" type="text" value="AMD, NVDA, TSLA" />
+          </div>
+          <div class="field">
+            <label>First-hour minutes</label>
+            <div class="bt-chips" id="bt-opt-firsthour" data-axis="firstHour" data-values="15,30,45,60" data-default="15,30,45,60"></div>
+          </div>
+          <div class="field">
+            <label>Dip %</label>
+            <div class="bt-chips" id="bt-opt-dip" data-axis="dip" data-values="1,1.5,2,2.5,3,3.5,4" data-default="1,1.5,2,2.5,3,3.5,4"></div>
+          </div>
+          <div class="field">
+            <label>Target %</label>
+            <div class="bt-chips" id="bt-opt-target" data-axis="target" data-values="0.25,0.5,0.75,1,1.25,1.5,2" data-default="0.25,0.5,0.75,1,1.25,1.5,2"></div>
+          </div>
+          <div class="field">
+            <label>Stop %</label>
+            <div class="bt-chips" id="bt-opt-stop" data-axis="stop" data-values="none,0.5,1,1.5,2,3" data-default="none,0.5,1,1.5,2,3"></div>
+          </div>
+          <div class="field">
+            <label for="bt-opt-slippage">Slippage (bps)</label>
+            <input id="bt-opt-slippage" class="input input-money" type="number" min="0" step="0.5" value="0" />
+          </div>
+          <div class="field">
+            <label for="bt-opt-interval">Interval</label>
+            <select id="bt-opt-interval" class="select">
+              <option value="1m">1m</option>
+              <option value="5m" selected>5m</option>
+              <option value="15m">15m</option>
+              <option value="30m">30m</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bt-opt-period">Period</label>
+            <select id="bt-opt-period" class="select">
+              <option value="30d">30d</option>
+              <option value="60d" selected>60d</option>
+              <option value="90d">90d</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button id="bt-opt-run" class="btn btn-primary"><i class="fa-solid fa-bolt"></i> Run optimizer</button>
+              <button id="bt-opt-cancel" class="btn btn-ghost" disabled><i class="fa-solid fa-stop"></i> Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bt-progress-row" id="bt-opt-progress-row" style="display:none;">
+          <div class="bar"><div class="bt-progress"><div id="bt-opt-bar"></div></div></div>
+          <span id="bt-opt-progress-text">0%</span>
+        </div>
+        <p class="muted" style="font-size:11px; margin-top:8px;" id="bt-opt-combo-count">Combinations to test: 0</p>
+      </div>
+
+      <!-- Best strategy KPI card (Phase 5) -->
+      <div class="card" id="bt-best-card" style="display:none;">
+        <div class="card-head"><div><h2>Best strategy per ticker</h2><div class="card-sub">Ranked by total P/L. Click "Apply" to load into the Engine tab.</div></div></div>
+        <div id="bt-best-list"></div>
+      </div>
+
+      <!-- Full optimizer results -->
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Optimizer results</h2><div class="card-sub">Sortable. Click a column header.</div></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="bt-opt-table">
+            <thead>
+              <tr>
+                <th data-sort="ticker">Ticker</th>
+                <th class="num" data-sort="firstHourMin">1h min</th>
+                <th class="num" data-sort="dipPct">Dip %</th>
+                <th class="num" data-sort="targetPct">Target %</th>
+                <th class="num" data-sort="stopPct">Stop %</th>
+                <th class="num" data-sort="tradesTaken">Trades</th>
+                <th class="num" data-sort="winRate">Win %</th>
+                <th class="num" data-sort="totalPL">Total P/L</th>
+                <th class="num" data-sort="avgPL">Avg P/L</th>
+                <th class="num" data-sort="profitFactor">PF</th>
+                <th class="num" data-sort="expectancy">Exp.</th>
+                <th class="num" data-sort="maxDrawdown">Max DD</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="bt-opt-body"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="bt-opt-empty"><i class="fa-regular fa-square-check"></i>Run the optimizer to populate results.</div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         HEATMAP TAB
+         =================================================================== -->
+    <section id="tab-heatmap" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Strategy heatmap</h2><div class="card-sub">Dip × Target performance. Click a cell to seed the Engine tab.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="bt-heat-ticker">Ticker</label>
+            <select id="bt-heat-ticker" class="select"></select>
+          </div>
+          <div class="field">
+            <label for="bt-heat-metric">Metric</label>
+            <select id="bt-heat-metric" class="select">
+              <option value="winRate">Win rate</option>
+              <option value="totalPL">Total P/L %</option>
+              <option value="avgPL">Avg P/L %</option>
+              <option value="expectancy">Expectancy</option>
+              <option value="profitFactor">Profit factor</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bt-heat-firsthour">First-hour (fixed)</label>
+            <select id="bt-heat-firsthour" class="select"></select>
+          </div>
+          <div class="field">
+            <label for="bt-heat-stop">Stop (fixed)</label>
+            <select id="bt-heat-stop" class="select"></select>
+          </div>
+        </div>
+        <div style="margin-top: var(--s-4);">
+          <canvas id="bt-heat-canvas" style="height: 420px; width: 100%;"></canvas>
+        </div>
+        <div class="empty" id="bt-heat-empty"><i class="fa-regular fa-square-check"></i>Run the optimizer first.</div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         CHARTS TAB
+         =================================================================== -->
+    <section id="tab-charts" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Performance charts</h2><div class="card-sub">Driven by the latest Engine tab result. Pick a ticker × target × stop to chart.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="bt-ch-ticker">Ticker</label><select id="bt-ch-ticker" class="select"></select></div>
+          <div class="field"><label for="bt-ch-target">Target</label><select id="bt-ch-target" class="select"></select></div>
+          <div class="field"><label for="bt-ch-stop">Stop</label><select id="bt-ch-stop" class="select"></select></div>
+        </div>
+        <div class="empty" id="bt-ch-empty" style="margin-top: var(--s-4);"><i class="fa-regular fa-square-check"></i>Run a backtest on the Engine tab first.</div>
+      </div>
+
+      <div class="bt-chart-grid" id="bt-ch-grid" style="display:none;">
+        <div class="bt-chart-card"><h3>Equity curve</h3><canvas id="bt-ch-equity"></canvas></div>
+        <div class="bt-chart-card"><h3>Drawdown</h3><canvas id="bt-ch-drawdown"></canvas></div>
+        <div class="bt-chart-card"><h3>Monthly P/L</h3><canvas id="bt-ch-monthly"></canvas></div>
+        <div class="bt-chart-card"><h3>P/L distribution</h3><canvas id="bt-ch-hist"></canvas></div>
+        <div class="bt-chart-card"><h3>Trade duration (minutes)</h3><canvas id="bt-ch-duration"></canvas></div>
+        <div class="bt-chart-card"><h3>Win/Loss calendar</h3><div id="bt-ch-calendar"></div></div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         REPLAY TAB
+         =================================================================== -->
+    <section id="tab-replay" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Trade replay</h2><div class="card-sub">Animate candles for any trade day in the current Engine result.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="bt-rp-ticker">Ticker</label><select id="bt-rp-ticker" class="select"></select></div>
+          <div class="field"><label for="bt-rp-date">Date</label><select id="bt-rp-date" class="select"></select></div>
+          <div class="field"><label for="bt-rp-target">Target</label><select id="bt-rp-target" class="select"></select></div>
+          <div class="field"><label for="bt-rp-stop">Stop</label><select id="bt-rp-stop" class="select"></select></div>
+          <div class="field"><label>&nbsp;</label><button id="bt-rp-load" class="btn btn-primary"><i class="fa-solid fa-clapperboard"></i> Load day</button></div>
+        </div>
+
+        <div class="bt-replay-grid" id="bt-rp-grid" style="display:none; margin-top: var(--s-4);">
+          <div>
+            <div id="bt-replay-chart"></div>
+            <div class="bt-replay-controls">
+              <button id="bt-rp-play" class="btn btn-sm"><i class="fa-solid fa-play"></i></button>
+              <button id="bt-rp-reset" class="btn btn-sm btn-ghost"><i class="fa-solid fa-rotate-left"></i></button>
+              <select id="bt-rp-speed" class="select" style="width:90px;">
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+                <option value="4">4×</option>
+                <option value="8">8×</option>
+              </select>
+              <input id="bt-rp-scrub" type="range" min="1" max="78" value="1" />
+              <span id="bt-rp-pos" class="muted" style="font-size:12px;">0 / 0</span>
+            </div>
+          </div>
+          <div class="bt-narrative" id="bt-rp-narrative"></div>
+        </div>
+
+        <div class="empty" id="bt-rp-empty"><i class="fa-regular fa-square-check"></i>Run the Engine tab, then pick a trade day to replay.</div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         COMPARE TAB
+         =================================================================== -->
+    <section id="tab-compare" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Compare stocks</h2><div class="card-sub">Find each ticker's best parameters, then compare side-by-side.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label>Tickers</label>
+            <div class="bt-chips" id="bt-cmp-tickers" data-default="AMD,NVDA,TSLA,PLTR,META,AAPL,AMZN,MSFT"></div>
+            <div style="margin-top:4px; display:flex; gap:4px;">
+              <input id="bt-cmp-input" class="input" type="text" placeholder="add ticker…" style="max-width:160px;" maxlength="10" />
+              <button class="btn btn-sm" id="bt-cmp-add"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+          <div class="field"><label>&nbsp;</label><button id="bt-cmp-run" class="btn btn-primary"><i class="fa-solid fa-scale-balanced"></i> Compare</button></div>
+        </div>
+        <div class="bt-progress-row" id="bt-cmp-progress-row" style="display:none;">
+          <div class="bar"><div class="bt-progress"><div id="bt-cmp-bar"></div></div></div>
+          <span id="bt-cmp-progress-text">0%</span>
         </div>
       </div>
-      <div class="table-wrap">
-        <table class="table" id="bt-summary-table">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th class="num">Target %</th>
-              <th class="num">Total days</th>
-              <th class="num">Trades taken</th>
-              <th class="num">No-trade days</th>
-              <th class="num">Wins</th>
-              <th class="num">Losses</th>
-              <th class="num">Win rate</th>
-              <th class="num">Avg P/L %</th>
-              <th class="num">Total P/L %</th>
-              <th class="num">Best day</th>
-              <th class="num">Worst day</th>
-            </tr>
-          </thead>
-          <tbody id="bt-summary-body"></tbody>
-        </table>
+
+      <div class="card" id="bt-cmp-results-card" style="display:none;">
+        <div class="card-head"><div><h2>Side-by-side best strategies</h2></div></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th class="num">1h</th>
+                <th class="num">Dip</th>
+                <th class="num">Target</th>
+                <th class="num">Stop</th>
+                <th class="num">Trades</th>
+                <th class="num">Win %</th>
+                <th class="num">Total P/L</th>
+                <th class="num">Avg P/L</th>
+                <th class="num">Max DD</th>
+              </tr>
+            </thead>
+            <tbody id="bt-cmp-body"></tbody>
+          </table>
+        </div>
+        <div class="bt-chart-card" style="margin-top: var(--s-4);">
+          <h3>Equity curves (best params, per ticker)</h3>
+          <canvas id="bt-cmp-equity" style="height:300px !important;"></canvas>
+        </div>
       </div>
-      <div class="empty" id="bt-summary-empty">
+    </section>
+
+    <!-- ===================================================================
+         MONTE CARLO TAB
+         =================================================================== -->
+    <section id="tab-montecarlo" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Monte Carlo</h2><div class="card-sub">Bootstrap-resample the trade list to estimate the distribution of outcomes.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="bt-mc-source">Trade source</label>
+            <select id="bt-mc-source" class="select">
+              <option value="engine">Latest Engine result (all trades)</option>
+              <option value="optimizer">Optimizer best-per-ticker</option>
+            </select>
+          </div>
+          <div class="field"><label for="bt-mc-n">Simulations</label><input id="bt-mc-n" class="input input-money" type="number" min="100" step="500" value="10000" /></div>
+          <div class="field"><label for="bt-mc-trades">Trades per simulation</label><input id="bt-mc-trades" class="input input-money" type="number" min="1" step="10" placeholder="auto" /></div>
+          <div class="field"><label>&nbsp;</label><button id="bt-mc-run" class="btn btn-primary"><i class="fa-solid fa-dice"></i> Run Monte Carlo</button></div>
+        </div>
+        <p class="muted" style="font-size:11px; margin-top:8px;">Slippage is already baked into each trade's P/L — no double counting.</p>
+      </div>
+
+      <div class="card" id="bt-mc-results" style="display:none;">
+        <div class="bt-kpi-grid">
+          <div class="bt-kpi"><div class="label">P(positive)</div><div class="value" id="bt-mc-pPos">—</div></div>
+          <div class="bt-kpi"><div class="label">P(negative)</div><div class="value" id="bt-mc-pNeg">—</div></div>
+          <div class="bt-kpi"><div class="label">Expected return</div><div class="value" id="bt-mc-mean">—</div></div>
+          <div class="bt-kpi"><div class="label">5th pct</div><div class="value" id="bt-mc-p05">—</div></div>
+          <div class="bt-kpi"><div class="label">50th pct</div><div class="value" id="bt-mc-p50">—</div></div>
+          <div class="bt-kpi"><div class="label">95th pct</div><div class="value" id="bt-mc-p95">—</div></div>
+          <div class="bt-kpi"><div class="label">Worst sim</div><div class="value" id="bt-mc-worst">—</div></div>
+        </div>
+        <div class="bt-chart-grid">
+          <div class="bt-chart-card"><h3>Final return distribution</h3><canvas id="bt-mc-hist"></canvas></div>
+          <div class="bt-chart-card"><h3>Sample equity paths (100 of N)</h3><canvas id="bt-mc-spaghetti"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         INVESTMENT PLANNER TAB
+         =================================================================== -->
+    <section id="tab-planner" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2><i class="fa-solid fa-sack-dollar"></i> Investment Planner</h2>
+            <div class="card-sub">
+              Sizes positions from your latest backtest. All math runs in the browser — no API keys, no server round-trip.
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="bt-ip-account">Account size ($)</label>
+            <input id="bt-ip-account" class="input input-money" type="number" min="100" step="100" value="100000" />
+          </div>
+          <div class="field">
+            <label for="bt-ip-income">Desired monthly income ($)</label>
+            <input id="bt-ip-income" class="input input-money" type="number" min="0" step="100" value="8000" />
+          </div>
+          <div class="field">
+            <label for="bt-ip-risk">Max risk per trade (%)</label>
+            <input id="bt-ip-risk" class="input" type="number" min="0.05" step="0.05" value="1" />
+          </div>
+          <div class="field">
+            <label for="bt-ip-cap">Max capital per trade (%)</label>
+            <input id="bt-ip-cap" class="input" type="number" min="1" max="100" step="1" value="50" />
+          </div>
+          <div class="field">
+            <label for="bt-ip-days">Expected trading days / month</label>
+            <input id="bt-ip-days" class="input" type="number" min="1" max="31" step="1" value="21" />
+          </div>
+          <div class="field">
+            <label for="bt-ip-runs">Monte Carlo runs</label>
+            <select id="bt-ip-runs" class="select">
+              <option value="1000">1,000 (fast)</option>
+              <option value="10000" selected>10,000 (recommended)</option>
+              <option value="25000">25,000 (slow)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bt-ip-source">Trade source</label>
+            <select id="bt-ip-source" class="select">
+              <option value="engine">Latest Engine result (filtered)</option>
+              <option value="compare">Compare tab — best per ticker</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bt-ip-source-ticker">Ticker filter</label>
+            <select id="bt-ip-source-ticker" class="select"><option value="">All tickers</option></select>
+          </div>
+          <div class="field">
+            <label for="bt-ip-source-target">Target % filter</label>
+            <select id="bt-ip-source-target" class="select"><option value="">All targets</option></select>
+          </div>
+          <div class="field">
+            <label for="bt-ip-source-stop">Stop % filter</label>
+            <select id="bt-ip-source-stop" class="select"><option value="">All stops</option></select>
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <button id="bt-ip-run" class="btn btn-primary"><i class="fa-solid fa-calculator"></i> Calculate plan</button>
+            <span class="muted" style="font-size:11px; margin-left:8px;">Re-run any backtest first; then come back here.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty" id="bt-ip-empty">
         <i class="fa-regular fa-square-check"></i>
-        Run a backtest above to see summary stats.
-      </div>
-    </div>
-
-    <!-- Per-trade table -->
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <h2>Trade detail</h2>
-          <div class="card-sub">All trade days for all tickers and targets.</div>
-        </div>
+        Configure your account above, then click <strong>Calculate plan</strong>.
       </div>
 
-      <div class="bt-trade-controls">
-        <div class="field">
-          <label for="bt-filter-ticker">Filter ticker</label>
-          <select id="bt-filter-ticker" class="select">
-            <option value="">All tickers</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="bt-filter-target">Filter target</label>
-          <select id="bt-filter-target" class="select">
-            <option value="">All targets</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="bt-filter-type">Filter trade type</label>
-          <select id="bt-filter-type" class="select">
-            <option value="">All</option>
-            <option value="up">Trending up</option>
-            <option value="down">Trending down</option>
-            <option value="none">No trade</option>
-          </select>
+      <div id="bt-ip-warnings" style="display:none;"></div>
+
+      <div class="card" id="bt-ip-results" style="display:none;">
+        <div class="card-head"><div><h2>Position sizing</h2></div></div>
+        <div class="bt-kpi-grid">
+          <div class="bt-kpi" style="border-color:#48bb78;">
+            <div class="label">Suggested position size</div>
+            <div class="value" id="bt-ip-suggested">—</div>
+          </div>
+          <div class="bt-kpi">
+            <div class="label">Risk dollars / trade</div>
+            <div class="value" id="bt-ip-risk-dollars">—</div>
+          </div>
+          <div class="bt-kpi">
+            <div class="label">Expected profit / trade</div>
+            <div class="value" id="bt-ip-profit-per-trade">—</div>
+          </div>
+          <div class="bt-kpi">
+            <div class="label">Expected trades / month</div>
+            <div class="value" id="bt-ip-trades-per-month">—</div>
+          </div>
+          <div class="bt-kpi" style="border-color:#4299e1;">
+            <div class="label">Expected monthly profit</div>
+            <div class="value" id="bt-ip-monthly-profit">—</div>
+          </div>
+          <div class="bt-kpi" style="border-color:#dd6b20;">
+            <div class="label">Capital to hit income goal</div>
+            <div class="value" id="bt-ip-capital-needed">—</div>
+          </div>
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table class="table" id="bt-trades-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Ticker</th>
-              <th class="num">Target %</th>
-              <th>Trade type</th>
-              <th class="num">Buy</th>
-              <th class="num">Sell</th>
-              <th class="num">P/L %</th>
-              <th>Target hit?</th>
-            </tr>
-          </thead>
-          <tbody id="bt-trades-body"></tbody>
-        </table>
+      <div class="card" id="bt-ip-stats" style="display:none;">
+        <div class="card-head"><div><h2>Strategy statistics</h2></div></div>
+        <div class="bt-kpi-grid">
+          <div class="bt-kpi"><div class="label">Win rate</div><div class="value" id="bt-ip-winrate">—</div></div>
+          <div class="bt-kpi"><div class="label">Average win</div><div class="value" id="bt-ip-avgwin">—</div></div>
+          <div class="bt-kpi"><div class="label">Average loss</div><div class="value" id="bt-ip-avgloss">—</div></div>
+          <div class="bt-kpi"><div class="label">Worst loss</div><div class="value" id="bt-ip-worstloss">—</div></div>
+          <div class="bt-kpi"><div class="label">Expectancy</div><div class="value" id="bt-ip-expectancy">—</div></div>
+          <div class="bt-kpi"><div class="label">Profit factor</div><div class="value" id="bt-ip-pf">—</div></div>
+          <div class="bt-kpi"><div class="label">Trades analyzed</div><div class="value" id="bt-ip-trades">—</div></div>
+          <div class="bt-kpi"><div class="label">Trading days tested</div><div class="value" id="bt-ip-days-tested">—</div></div>
+        </div>
       </div>
-      <div class="empty" id="bt-trades-empty">
-        <i class="fa-regular fa-rectangle-list"></i>
-        No trades yet — run a backtest to populate this table.
+
+      <div class="card" id="bt-ip-mc-card" style="display:none;">
+        <div class="card-head"><div><h2>Monte Carlo — monthly outcomes</h2><div class="card-sub">Resamples your trade history at the suggested position size. Lower curves = unlucky months; the dashed line is your income target.</div></div></div>
+        <div class="bt-kpi-grid">
+          <div class="bt-kpi" style="border-color:#48bb78;"><div class="label">P(positive month)</div><div class="value" id="bt-ip-mc-ppos">—</div></div>
+          <div class="bt-kpi" style="border-color:#4299e1;"><div class="label">P(reach income goal)</div><div class="value" id="bt-ip-mc-ptarget">—</div></div>
+          <div class="bt-kpi"><div class="label">5th percentile month</div><div class="value" id="bt-ip-mc-p5">—</div></div>
+          <div class="bt-kpi"><div class="label">Median month</div><div class="value" id="bt-ip-mc-median">—</div></div>
+          <div class="bt-kpi"><div class="label">95th percentile month</div><div class="value" id="bt-ip-mc-p95">—</div></div>
+          <div class="bt-kpi" style="border-color:#e53e3e;"><div class="label">Worst simulated month</div><div class="value" id="bt-ip-mc-worst">—</div></div>
+          <div class="bt-kpi" style="border-color:#38a169;"><div class="label">Best simulated month</div><div class="value" id="bt-ip-mc-best">—</div></div>
+        </div>
+        <div style="height:340px; margin-top: var(--s-4);">
+          <canvas id="bt-ip-mc-hist"></canvas>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- ===================================================================
+         AI LAB TAB
+         =================================================================== -->
+    <section id="tab-ai" class="tab-panel" role="tabpanel">
+      <div class="bt-banner" id="bt-ai-disabled" style="display:none;">
+        <i class="fa-solid fa-circle-info"></i>
+        <span><strong>AI features are off.</strong> Set <code>OPENAI_API_KEY</code> on the server to enable. Every other tab keeps working.</span>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div><h2><i class="fa-solid fa-brain"></i> Recommendations</h2><div class="card-sub">Asks OpenAI to summarize the latest optimizer result. Server-side; your key never reaches the browser.</div></div>
+          <button id="bt-ai-rec-run" class="btn btn-primary" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Analyze results</button>
+        </div>
+        <div id="bt-ai-rec-output">
+          <div class="empty"><i class="fa-regular fa-comments"></i>Run the optimizer first, then click "Analyze results".</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div><h2><i class="fa-solid fa-pen-ruler"></i> Strategy Builder</h2><div class="card-sub">Describe a strategy in plain English. The AI returns a validated JSON strategy you can apply to the Engine tab.</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="bt-ai-sb-input">Strategy description</label>
+            <textarea id="bt-ai-sb-input" class="input" rows="3" placeholder="e.g. Buy after a 2.5% dip, unless the first hour is green — then buy immediately. Sell at 0.8% or close at end of day."></textarea>
+          </div>
+          <div class="field"><label>&nbsp;</label><button id="bt-ai-sb-run" class="btn btn-primary" disabled><i class="fa-solid fa-cogs"></i> Build strategy</button></div>
+        </div>
+        <div id="bt-ai-sb-output" style="margin-top: var(--s-4);"></div>
+      </div>
+    </section>
   </main>
 
   <div id="toast-host"></div>
 
-  <!-- Firebase SDK (compat) — same versions as dashboard.html -->
+  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-  <!-- Existing app scripts (auth guard + helpers) -->
+  <!-- Chart.js + matrix plugin (heatmap) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+
+  <!-- TradingView open-source lightweight-charts (Replay tab) -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+
+  <!-- Existing app helpers + auth -->
   <script src="/js/firebase-init.js"></script>
   <script src="/js/utils.js"></script>
   <script src="/js/auth.js"></script>
 
-  <!-- Backtester logic -->
+  <!-- Strategy Lab: engine first (pure math), then page modules -->
+  <script src="/js/backtester-engine.js"></script>
+  <script src="/js/backtester-charts.js"></script>
+  <script src="/js/backtester-replay.js"></script>
+  <script src="/js/backtester-investment-planner.js"></script>
+  <script src="/js/backtester-ai.js"></script>
   <script src="/js/backtester.js"></script>
 </body>
 </html>
