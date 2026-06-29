@@ -195,6 +195,77 @@
     }
     .bt-kpi .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
     .bt-kpi .value { font-size: 20px; font-weight: 700; margin-top: 2px; color: var(--c-text); }
+
+    /* ============================================================
+       Mobile tuning — phone-first layout for every Lab tab
+       ============================================================ */
+    @media (max-width: 768px) {
+      /* Hide button text labels in the page header so brand + 2 icon
+         buttons always fit on a 360px screen. */
+      .app-header .user .btn-sm span { display: none; }
+      .app-header .user .btn-sm { padding: 8px 10px; min-width: 36px; justify-content: center; }
+
+      /* Tabbar: bigger touch targets + horizontal scroll snap.
+         Global stylesheet already hides text labels at this width. */
+      .tabbar { padding: 6px; scroll-snap-type: x proximity; gap: 4px; }
+      .tabbar button {
+        padding: 10px 12px;
+        min-width: 44px;
+        justify-content: center;
+        scroll-snap-align: start;
+      }
+
+      /* Tighter cards + ensure any wide .table inside a tab can scroll
+         horizontally without breaking out of its card. */
+      .tab-panel .card { padding: var(--s-3); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .tab-panel .card .table { min-width: max-content; }
+
+      /* Lab KPI tiles */
+      .bt-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: var(--s-3); }
+      .bt-kpi { padding: 8px 10px; }
+      .bt-kpi .value { font-size: 16px; }
+      .bt-kpi .label { font-size: 9px; }
+
+      /* Charts grid stacks; canvases shorten so two fit on one screen. */
+      .bt-chart-grid { grid-template-columns: 1fr; gap: var(--s-3); }
+      .bt-chart-card { padding: var(--s-3); }
+      .bt-chart-card canvas { height: 220px !important; }
+
+      /* Replay chart shorter and TradingView toolbar doesn't crowd it. */
+      #bt-replay-chart { height: 280px; }
+      .bt-replay-grid { gap: var(--s-3); }
+
+      /* Calendar cells stay readable on narrow screens. */
+      .bt-cal { gap: 2px; font-size: 10px; }
+      .bt-cal-cell .d { font-size: 9px; }
+
+      /* Heatmap needs a guaranteed minimum so labels don't smash. */
+      #bt-heat-canvas { min-height: 340px; }
+
+      /* Banners + progress lines compact. */
+      .bt-banner { padding: 8px 10px; font-size: 12px; }
+      .bt-progress-row { font-size: 11px; gap: 8px; }
+
+      /* Form grid + chips tighter. */
+      .form-grid { gap: var(--s-2); }
+      .bt-chip { padding: 4px 8px; font-size: 11px; }
+
+      .bt-narrative .step { padding: 6px 10px; font-size: 12px; }
+      .bt-ai-bullet { padding: 8px 10px; font-size: 12px; }
+    }
+
+    @media (max-width: 480px) {
+      /* Page hero card stays compact. */
+      main.app-main > .card:first-child { padding: var(--s-3) var(--s-4); margin-bottom: var(--s-3); }
+      /* 2-up KPI grid at the very smallest widths. */
+      .bt-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      /* Bigger touch targets for inputs. */
+      .input, .select { padding: 11px 12px; font-size: 14px; }
+      /* MC histograms a bit shorter to keep the controls in view. */
+      #bt-ip-mc-hist, #bt-mc-hist, #bt-mc-spaghetti, #bt-cmp-equity { height: 240px !important; }
+      /* Section headings tighter. */
+      .card-head h2 { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
