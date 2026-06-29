@@ -191,13 +191,28 @@ button { font-family: inherit; }
   background: var(--c-card);
   border: 1px solid var(--c-border);
   border-left: 3px solid var(--c-blue);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--s-4) var(--s-5);
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+  opacity: 0.85;
+}
+.kpi:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 .kpi .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
-.kpi .value { font-size: 26px; font-weight: 700; margin-top: 4px; color: var(--c-text); }
-.kpi .delta { font-size: 12px; font-weight: 600; margin-top: 2px; }
+.kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: var(--c-text); line-height: 1.1; }
+.kpi .delta { font-size: 12px; font-weight: 600; margin-top: 4px; }
 .kpi.up    { border-left-color: var(--c-up); }
 .kpi.down  { border-left-color: var(--c-down); }
 .kpi.warn  { border-left-color: var(--c-warn); }
@@ -432,6 +447,31 @@ button { font-family: inherit; }
 .tv-ticker-tape { margin-bottom: var(--s-5); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-1); background: #131722; }
 
 /* ============================================================
+   Strategy Backtester header link — make it stand out so users
+   can find the Lab from the dashboard.
+   ============================================================ */
+.btn-lab {
+  background: linear-gradient(135deg, rgba(142, 68, 173, 0.95), rgba(231, 76, 60, 0.95));
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.btn-lab:hover {
+  background: linear-gradient(135deg, rgba(142, 68, 173, 1), rgba(231, 76, 60, 1));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+}
+.btn-lab i { color: #fde68a; }
+
+.disclaimer {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+.disclaimer i { color: var(--c-warn); }
+
+/* ============================================================
    Empty / loading states
    ============================================================ */
 .empty {
@@ -475,18 +515,25 @@ button { font-family: inherit; }
 @media (max-width: 768px) {
   .app-header { padding: 0 var(--s-3); }
   .app-header .brand { font-size: 14px; }
+  .app-header .brand span { display: none; }   /* show just the icon on phones */
   .app-header .user .email { display: none; }
+  .app-header .user { gap: var(--s-2); }
+  .app-header .user .btn .lbl,
+  .app-header .user .btn span:not(.lbl) { display: inline; }
+  .app-header .user .btn-sm span:not([class]) { display: none; } /* hide "Sign out" text, keep icon */
   .app-main { padding-left: var(--s-3); padding-right: var(--s-3); }
   .card { padding: var(--s-4); }
   .kpi { padding: var(--s-3) var(--s-4); }
   .kpi .value { font-size: 22px; }
   .split-grid { grid-template-columns: 1fr; }
   .tabbar { position: sticky; top: calc(var(--header-h) + var(--grad-bar-h)); z-index: 500; }
-  .tabbar button .lbl { display: none; }
-  .tabbar button i { font-size: 15px; }
+  .tabbar button .lbl { display: inline; font-size: 11px; }
+  .tabbar button { padding: 6px 10px; }
+  .tabbar button i { font-size: 13px; }
   .modal { max-height: 95vh; }
   .table { font-size: 12px; }
   .table th, .table td { padding: 8px 10px; }
+  .disclaimer { display: none; } /* save space on mobile header */
 }
 @media (max-width: 480px) {
   h1 { font-size: 22px; }

@@ -19,7 +19,18 @@
   }
 
   function tickerTape(containerId, symbols) {
-    var arr = (symbols || []).map(function (s) {
+    // Defensive dedupe (case-insensitive) so the bar never repeats the
+    // same ticker even if upstream callers pass duplicates.
+    var seen = {};
+    var clean = [];
+    (symbols || []).forEach(function (s) {
+      if (!s) return;
+      var key = String(s).toUpperCase();
+      if (seen[key]) return;
+      seen[key] = true;
+      clean.push(s);
+    });
+    var arr = clean.map(function (s) {
       return { description: s, proName: s };
     });
     if (!arr.length) {

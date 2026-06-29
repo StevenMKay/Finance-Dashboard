@@ -54,8 +54,11 @@ module.exports = async function handler(req, res) {
   const slippageBps   = Number(body.slippageBps) || 0;
   const topStrategies = body.topStrategies && typeof body.topStrategies === 'object' ? body.topStrategies : {};
   const sampleRows    = Array.isArray(body.sampleRows) ? body.sampleRows.slice(0, 50) : [];
+  // Optional experiment-leaderboard payload (from the Experiments tab).
+  // Trusted only as summary stats — the AI is told never to invent numbers.
+  const experiments   = Array.isArray(body.experiments) ? body.experiments.slice(0, 40) : [];
 
-  const prompt = buildPrompt({ tickers, slippageBps, topStrategies, sampleRows });
+  const prompt = buildPrompt({ tickers, slippageBps, topStrategies, sampleRows, experiments });
 
   let openaiResp;
   try {
@@ -106,9 +109,12 @@ const SYSTEM_PROMPT =
   'You are a careful trading research assistant. You analyze pre-computed backtest results — ' +
   'you do NOT generate predictions or financial advice. Be specific about which parameter ' +
   'combinations look most reliable based on the supplied stats (win rate, total P/L, profit ' +
-  'factor, max drawdown, sample size). Call out small-sample warnings when trade counts are low. ' +
-  'Respond ONLY in JSON with keys: "headline" (one sentence) and "bullets" (array of 4-8 short ' +
-  'strings, each one observation or caution). Never invent numbers.';
+  'factor, max drawdown, sample size, expectancy). When experiment-leaderboard rows are present, ' +
+  'also call out: (a) the best experiment / ticker / settings by expectancy, (b) rows that look ' +
+  'overfit (very high P/L paired with low trade counts), (c) low sample-size warnings (trades < 30), ' +
+  'and (d) rows with good expectancy but unacceptable max drawdown. Respond ONLY in JSON with keys: ' +
+  '"headline" (one sentence) and "bullets" (array of 4-8 short strings, each one observation or ' +
+  'caution). Never invent numbers — only summarize what was supplied.';
 
 function buildPrompt(p) {
   const lines = [];
@@ -134,6 +140,24 @@ function buildPrompt(p) {
         ' WR=' + (r.winRate || 0).toFixed(1) + '% tPL=' + (r.totalPL || 0).toFixed(2) +
         '% PF=' + (isFinite(r.profitFactor) ? r.profitFactor.toFixed(2) : 'inf') +
         ' DD=' + (r.maxDrawdown || 0).toFixed(2) + '%');
+    });
+  }
+  if (p.experiments && p.experiments.length) {
+    lines.push('');
+    lines.push('Experiment leaderboard (ranked by expectancy, then total P/L, then drawdown):');
+    p.experiments.slice(0, 40).forEach(function (r, i) {
+      var params = r.params && typeof r.params === 'object'
+        ? Object.keys(r.params).map(function (k) { return k + '=' + (r.params[k] == null ? 'none' : r.params[k]); }).join(' ')
+        : '';
+      lines.push('  ' + (i + 1) + '. ' + (r.experimentName || r.experimentId || '?') +
+        ' [' + r.ticker + '] ' + params +
+        ' trades=' + r.tradesTaken +
+        ' WR=' + (r.winRate || 0).toFixed(1) + '%' +
+        ' E=' + (r.expectancy || 0).toFixed(2) + '%' +
+        ' tPL=' + (r.totalPL || 0).toFixed(2) + '%' +
+        ' DD=' + (r.maxDrawdown || 0).toFixed(2) + '%' +
+        ' PF=' + (isFinite(r.profitFactor) ? (r.profitFactor || 0).toFixed(2) : 'inf') +
+        (r.smallSample ? ' [small-sample]' : ''));
     });
   }
   return lines.join('\n');

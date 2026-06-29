@@ -69,14 +69,26 @@
 
     var colors = ['#1a2744', '#27ae60', '#2980b9', '#8e44ad', '#f39c12', '#e74c3c', '#16a085', '#34495e', '#d35400', '#7f8c8d', '#3498db', '#c0392b'];
     var ctx = FU.$('#allocChart').getContext('2d');
+    var emptyEl = FU.$('#alloc-empty');
+    var chartCanvas = FU.$('#allocChart');
+    var legendBox = FU.$('#alloc-legend');
 
     if (!labels.length) {
       if (allocChart) { allocChart.destroy(); allocChart = null; }
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      var legend = FU.$('#alloc-legend');
-      legend.innerHTML = '<div class="empty"><i class="fa-regular fa-chart-pie"></i>Add accounts or holdings to see allocation.</div>';
+      // Hide the donut + legend grid, surface the dedicated empty state
+      // instead so the card doesn't have a tall blank canvas.
+      if (chartCanvas && chartCanvas.parentNode && chartCanvas.parentNode.parentNode) {
+        chartCanvas.parentNode.parentNode.style.display = 'none';
+      }
+      legendBox.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = '';
       return;
     }
+    if (chartCanvas && chartCanvas.parentNode && chartCanvas.parentNode.parentNode) {
+      chartCanvas.parentNode.parentNode.style.display = '';
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
 
     if (allocChart) {
       allocChart.data.labels = labels;

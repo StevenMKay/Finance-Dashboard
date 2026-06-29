@@ -1358,6 +1358,8 @@
         }
       }, 250);
     });
+
+    bootExperimentWorkbench();
   }
 
   function refreshExperimentsTab() {
@@ -1602,7 +1604,16 @@
       tickers: Object.keys(bestByT),
       slippageBps: state.optimizerResult.settings.slippageBps,
       topStrategies: bestByT,
-      sampleRows: rows.slice(0, 50)
+      sampleRows: rows.slice(0, 50),
+      // Forward the experiment leaderboard so the AI can also reason
+      // about adjustable strategy patterns alongside the optimizer.
+      experiments: (typeof BTExperiments !== 'undefined' && xpState.leaderboard && xpState.leaderboard.length)
+        ? BTExperiments.rankRows(xpState.leaderboard).slice(0, 40).map(function (r) {
+            var clone = Object.assign({}, r);
+            delete clone.trades; // never ship raw trades to the API
+            return clone;
+          })
+        : []
     };
     $('#bt-ai-rec-output').innerHTML = '<div class="bt-loading show"><i class="fa-solid fa-spinner"></i> Asking the AI…</div>';
     BTAI.recommend(payload).then(function (resp) {
@@ -1771,5 +1782,259 @@
       t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
+  }
+
+  // ===================================================================
+  // EXPERIMENT WORKBENCH
+  // -------------------------------------------------------------------
+  // Drives the Experiments tab's adjustable strategy library. Each
+  // experiment is described in `BTExperiments.LIBRARY`; we render its
+  // controls dynamically and run it on the candles already loaded by
+  // the Engine tab. Results accumulate into a leaderboard so the user
+  // can iterate and compare runs.
+  // ===================================================================
+  var xpState = { leaderboard: [], currentId: null };
+
+  function bootExperimentWorkbench() {
+    if (typeof BTExperiments === 'undefined') return;
+    // One-time self-test to catch broken builds early.
+    try {
+      var t = BTExperiments.selfTest();
+      if (t.failed === 0) console.log('[BTExperiments] selfTest passed (' + t.passed + ' checks).');
+      else console.error('[BTExperiments] selfTest FAILED:', t.results.filter(function (r) { return !r.ok; }));
+    } catch (e) { console.error('[BTExperiments] selfTest threw', e); }
+
+    var sel = $('#bt-xp-select');
+    BTExperiments.LIBRARY.forEach(function (e, i) {
+      var opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = (i + 1) + '. ' + e.name;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () { renderXpControls(sel.value); });
+    renderXpControls(sel.value || BTExperiments.LIBRARY[0].id);
+
+    $('#bt-xp-reset').addEventListener('click', function () { renderXpControls($('#bt-xp-select').value, /*force*/ true); });
+    $('#bt-xp-run').addEventListener('click', runExperiment);
+    $('#bt-xp-clear').addEventListener('click', function () {
+      xpState.leaderboard = []; renderLeaderboard();
+    });
+    $('#bt-xp-csv-leader').addEventListener('click', function () {
+      downloadCsv(BTExperiments.exportCsv(xpState.leaderboard, 'leaderboard'), 'experiment-leaderboard.csv');
+    });
+    $('#bt-xp-csv-trades').addEventListener('click', function () {
+      downloadCsv(BTExperiments.exportCsv(xpState.leaderboard, 'trades'), 'experiment-trades.csv');
+    });
+  }
+
+  function renderXpControls(experimentId, force) {
+    var expt = BTExperiments.byId(experimentId);
+    if (!expt) return;
+    xpState.currentId = experimentId;
+    $('#bt-xp-summary').textContent = expt.summary;
+    var host = $('#bt-xp-controls');
+    host.innerHTML = '';
+    expt.controls.forEach(function (c) {
+      var field = document.createElement('div');
+      field.className = 'field';
+      var label = document.createElement('label');
+      label.textContent = c.label + (c.suffix ? ' (' + c.suffix + ')' : '');
+      label.setAttribute('for', 'bt-xp-c-' + c.id);
+      field.appendChild(label);
+      var control = buildXpControl(c);
+      field.appendChild(control);
+      host.appendChild(field);
+    });
+  }
+
+  function buildXpControl(c) {
+    if (c.type === 'choice' || c.type === undefined) {
+      var s = document.createElement('select');
+      s.className = 'select'; s.id = 'bt-xp-c-' + c.id;
+      (c.options || []).forEach(function (v) {
+        var opt = document.createElement('option');
+        opt.value = (v == null ? '__none__' : String(v));
+        opt.textContent = (v == null ? 'none' : (String(v) + (c.suffix ? ' ' + c.suffix : '')));
+        if (v === c.default || (v == null && c.default == null)) opt.selected = true;
+        s.appendChild(opt);
+      });
+      return s;
+    }
+    if (c.type === 'bool') {
+      var w = document.createElement('label');
+      w.style.display = 'flex'; w.style.alignItems = 'center'; w.style.gap = '8px'; w.style.padding = '8px 0';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.id = 'bt-xp-c-' + c.id; cb.checked = !!c.default;
+      var sp = document.createElement('span'); sp.textContent = c.default ? 'yes' : 'no';
+      cb.addEventListener('change', function () { sp.textContent = cb.checked ? 'yes' : 'no'; });
+      w.appendChild(cb); w.appendChild(sp);
+      return w;
+    }
+    // number fallback
+    var n = document.createElement('input');
+    n.type = 'number'; n.className = 'input input-money'; n.id = 'bt-xp-c-' + c.id;
+    if (c.min != null) n.min = c.min; if (c.max != null) n.max = c.max;
+    n.step = c.step || 0.1; n.value = c.default == null ? '' : c.default;
+    return n;
+  }
+
+  function readXpParams(expt) {
+    var out = {};
+    expt.controls.forEach(function (c) {
+      var el = document.getElementById('bt-xp-c-' + c.id);
+      if (!el) { out[c.id] = c.default; return; }
+      if (c.type === 'bool') { out[c.id] = !!el.checked; return; }
+      var v = (el.value !== undefined) ? el.value : c.default;
+      if (v === '__none__' || v === '' || v == null) { out[c.id] = null; return; }
+      var asNum = Number(v);
+      out[c.id] = (typeof v === 'string' && /^[A-Za-z:]/.test(v)) ? v : (isFinite(asNum) ? asNum : v);
+    });
+    return out;
+  }
+
+  function runExperiment() {
+    showError('');
+    var expt = BTExperiments.byId(xpState.currentId);
+    if (!expt) return;
+    if (!state.engineResult || !state.engineResult.candlesByTicker) {
+      showError('Run the Engine tab first — experiments use the same candles as the most recent backtest.');
+      return;
+    }
+    var candlesByTicker = state.engineResult.candlesByTicker;
+    var tickersRaw = ($('#bt-xp-tickers').value || '').trim();
+    var tickers = tickersRaw
+      ? tickersRaw.split(/[,\s]+/).map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean)
+      : Object.keys(candlesByTicker);
+    // Keep only tickers we actually have candles for.
+    tickers = tickers.filter(function (tk) { return candlesByTicker[tk] && candlesByTicker[tk].length; });
+    if (!tickers.length) {
+      showError('No matching tickers in the loaded candle set. Run the Engine tab with those tickers first.');
+      return;
+    }
+
+    var params = readXpParams(expt);
+    var slippageBps = Number($('#bt-slippage').value) || 0;
+    var settings = { tickers: tickers, slippageBps: slippageBps, params: params };
+
+    $('#bt-xp-loading').classList.add('show');
+    setTimeout(function () {
+      try {
+        var result = BTExperiments.run(expt.id, candlesByTicker, settings,
+          { intervalMin: Number(state.engineResult.settings.interval && String(state.engineResult.settings.interval).replace(/[^0-9]/g, '')) || 5 });
+        renderXpSummary(result, expt, settings);
+        // Append to leaderboard.
+        xpState.leaderboard = xpState.leaderboard.concat(result.rows);
+        renderLeaderboard();
+      } catch (e) {
+        showError('Experiment failed: ' + (e.message || String(e)));
+      } finally {
+        $('#bt-xp-loading').classList.remove('show');
+      }
+    }, 10);
+  }
+
+  function renderXpSummary(result, expt, settings) {
+    $('#bt-xp-summary-card').style.display = '';
+    $('#bt-xp-settings-line').textContent =
+      expt.name + ' · ' +
+      Object.keys(settings.params).map(function (k) {
+        return k + '=' + (settings.params[k] == null ? 'none' : settings.params[k]);
+      }).join(' · ') +
+      ' · slip ' + settings.slippageBps + ' bps · tickers ' + settings.tickers.join('/');
+
+    var rows = result.rows;
+    // Compose KPI tiles: one per ticker (compact).
+    var html = '';
+    rows.forEach(function (r) {
+      var expClass = r.expectancy > 0 ? 'bt-pl-pos' : (r.expectancy < 0 ? 'bt-pl-neg' : 'bt-pl-flat');
+      var warn = r.smallSample ? ' <span class="pill warn" title="Sample below 30">small</span>' : '';
+      html += '<div class="bt-kpi">' +
+        '<div class="label">' + escapeHtml(r.ticker) + warn + '</div>' +
+        '<div class="value">E <span class="' + expClass + '">' +
+          (r.expectancy >= 0 ? '+' : '') + r.expectancy.toFixed(2) + '%</span></div>' +
+        '<div class="muted" style="font-size:11px; margin-top:4px;">' +
+          r.tradesTaken + ' trades · WR ' + r.winRate.toFixed(0) + '% · ' +
+          'PL ' + (r.totalPL >= 0 ? '+' : '') + r.totalPL.toFixed(2) + '%' +
+        '</div>' +
+      '</div>';
+    });
+    $('#bt-xp-kpi-grid').innerHTML = html || '<div class="muted">No tickers ran.</div>';
+  }
+
+  function renderLeaderboard() {
+    var card = $('#bt-xp-board-card');
+    if (!xpState.leaderboard.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    var ranked = BTExperiments.rankRows(xpState.leaderboard);
+    var body = $('#bt-xp-board-body');
+    body.innerHTML = '';
+    ranked.forEach(function (r, idx) {
+      var tr = document.createElement('tr');
+      if (r.expectancy <= 0)   tr.style.background = '#fef2f2';
+      else if (r.smallSample)  tr.style.background = '#fffbeb';
+      var expClass = r.expectancy > 0 ? 'bt-pl-pos' : (r.expectancy < 0 ? 'bt-pl-neg' : 'bt-pl-flat');
+      var plClass  = r.totalPL    > 0 ? 'bt-pl-pos' : (r.totalPL    < 0 ? 'bt-pl-neg' : 'bt-pl-flat');
+      var ddClass  = r.maxDrawdown < 0 ? 'bt-pl-neg' : 'bt-pl-flat';
+      var pf = isFinite(r.profitFactor) ? r.profitFactor.toFixed(2) : '∞';
+      tr.innerHTML =
+        '<td class="num">' + (idx + 1) + '</td>' +
+        '<td>' + escapeHtml(r.experimentName) + '</td>' +
+        '<td class="sym">' + escapeHtml(r.ticker) + '</td>' +
+        '<td><span class="muted" style="font-size:11px;">' + escapeHtml(formatXpParams(r.params)) + '</span></td>' +
+        '<td class="num">' + r.tradesTaken + (r.smallSample ? ' <span class="pill warn">&lt;30</span>' : '') + '</td>' +
+        '<td class="num">' + r.winRate.toFixed(1) + '%</td>' +
+        '<td class="num"><span class="' + expClass + '">' + (r.expectancy >= 0 ? '+' : '') + r.expectancy.toFixed(2) + '%</span></td>' +
+        '<td class="num"><span class="' + plClass + '">' + (r.totalPL >= 0 ? '+' : '') + r.totalPL.toFixed(2) + '%</span></td>' +
+        '<td class="num"><span class="' + ddClass + '">' + r.maxDrawdown.toFixed(2) + '%</span></td>' +
+        '<td class="num">' + pf + '</td>' +
+        '<td class="num">' + r.avgHoldingMin.toFixed(0) + '</td>' +
+        '<td><button class="btn btn-sm btn-ghost" data-apply="' + idx + '"><i class="fa-solid fa-arrow-right"></i> Apply</button></td>';
+      body.appendChild(tr);
+    });
+    body.querySelectorAll('button[data-apply]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.getAttribute('data-apply'));
+        applyExperimentToEngine(ranked[i]);
+      });
+    });
+  }
+
+  function formatXpParams(p) {
+    if (!p) return '';
+    return Object.keys(p).map(function (k) {
+      return k + '=' + (p[k] == null ? 'none' : p[k]);
+    }).join(' · ');
+  }
+
+  // Seed the Engine tab with the row's target / stop where the params
+  // line up. We deliberately don't override `tickers` so the user can
+  // re-run Engine on whatever they currently have loaded.
+  function applyExperimentToEngine(row) {
+    var p = row.params || {};
+    if (p.targetPct != null) {
+      $('#bt-targets').innerHTML = '';
+      $('#bt-targets').appendChild(makeChip(String(p.targetPct), true));
+    }
+    if (p.stopPct !== undefined) {
+      $('#bt-stops').innerHTML = '';
+      if (p.stopPct != null) $('#bt-stops').appendChild(makeChip(String(p.stopPct), true));
+    }
+    if (p.windowMin != null)    $('#bt-trend-window').value = p.windowMin;
+    if (p.firstWindowMin != null) $('#bt-trend-window').value = p.firstWindowMin;
+    if (row.slippageBps != null) $('#bt-slippage').value = row.slippageBps;
+    // Switch to Engine tab.
+    $$('.tabbar button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === 'engine'); });
+    $$('.tab-panel').forEach(function (panel) { panel.classList.toggle('active', panel.id === 'tab-engine'); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function downloadCsv(text, filename) {
+    // Prepend a BOM so Excel reads UTF-8 cleanly.
+    var blob = new Blob(['\ufeff' + text], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 })();

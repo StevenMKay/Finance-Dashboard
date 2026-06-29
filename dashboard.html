@@ -15,10 +15,13 @@
       <span>Finance Dashboard</span>
     </div>
     <div class="user">
-      <a href="backtester.html" class="btn btn-sm btn-ghost" title="Strategy Backtester">
+      <a href="backtester.html" class="btn btn-sm btn-lab" title="Strategy Backtester — research / simulation only">
         <i class="fa-solid fa-flask"></i>
-        <span>Strategy Backtester</span>
+        <span>Strategy Lab</span>
       </a>
+      <span class="disclaimer" title="The Strategy Lab is for research only — not financial advice.">
+        <i class="fa-solid fa-circle-info"></i> Research / simulation only
+      </span>
       <span class="email" id="hdr-email">—</span>
       <button id="btn-signout" class="btn btn-sm btn-ghost" title="Sign out">
         <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -63,6 +66,10 @@
         <div class="split-grid">
           <div><canvas id="allocChart" height="220"></canvas></div>
           <div id="alloc-legend" class="results-list"></div>
+        </div>
+        <div class="empty" id="alloc-empty" style="display:none;">
+          <i class="fa-regular fa-chart-pie"></i>
+          Add accounts or holdings to see your allocation.
         </div>
       </div>
 
@@ -116,7 +123,7 @@
         </div>
         <div class="empty" id="wl-empty" style="display:none;">
           <i class="fa-regular fa-eye"></i>
-          No symbols yet. Add a ticker above to start tracking.
+          Add symbols to monitor price movement.
         </div>
       </div>
     </section>
@@ -167,7 +174,7 @@
         </div>
         <div class="empty" id="h-empty" style="display:none;">
           <i class="fa-regular fa-folder-open"></i>
-          No holdings yet. Add your first position above.
+          Add holdings to track live market value.
         </div>
       </div>
     </section>

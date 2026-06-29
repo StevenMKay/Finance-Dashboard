@@ -1119,7 +1119,93 @@
         <canvas id="bt-tf-chart" height="280"></canvas>
       </div>
 
-      <!-- Future experiments placeholder — keeps the tab extensible -->
+      <!-- ============ Experiment Workbench (10 adjustable strategies) ============ -->
+      <div class="card" id="bt-xp-workbench">
+        <div class="card-head">
+          <div>
+            <h2><i class="fa-solid fa-vials" style="color: var(--c-grad-1); margin-right:6px;"></i>Experiment Workbench</h2>
+            <div class="card-sub">
+              Pick a pattern, tune the numbers, and run it across the tickers loaded by the Engine tab.
+              Every run is added to the leaderboard below. <strong>Research only — not trading advice.</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="bt-xp-select">Experiment</label>
+            <select id="bt-xp-select" class="select"></select>
+            <div class="muted" id="bt-xp-summary" style="font-size:11px; margin-top:4px;"></div>
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label>Tickers (defaults to your Engine tickers)</label>
+            <input id="bt-xp-tickers" class="input" type="text" placeholder="AMD, NVDA, TSLA" />
+          </div>
+        </div>
+
+        <div id="bt-xp-controls" class="form-grid" style="margin-top: var(--s-3);"></div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: var(--s-3); align-items:center;">
+          <button id="bt-xp-run" class="btn btn-primary"><i class="fa-solid fa-flask-vial"></i> Run experiment</button>
+          <button id="bt-xp-reset" class="btn btn-ghost" type="button"><i class="fa-solid fa-rotate-left"></i> Reset to defaults</button>
+          <span class="bt-loading" id="bt-xp-loading"><i class="fa-solid fa-spinner"></i> Running…</span>
+          <span class="muted" style="font-size:11px;">Run the Engine tab first so the experiment has candles.</span>
+        </div>
+      </div>
+
+      <!-- KPI summary for the most recent run -->
+      <div class="card" id="bt-xp-summary-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>Most recent run</h2>
+            <div class="card-sub" id="bt-xp-settings-line"></div>
+          </div>
+        </div>
+        <div class="bt-kpi-grid" id="bt-xp-kpi-grid"></div>
+      </div>
+
+      <!-- Leaderboard — accumulates across runs -->
+      <div class="card" id="bt-xp-board-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>Experiment leaderboard</h2>
+            <div class="card-sub">Ranked by expectancy, then total P/L, then drawdown. Rows persist for this session.</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="bt-xp-csv-leader" class="btn btn-sm btn-ghost"><i class="fa-solid fa-file-csv"></i> CSV: leaderboard</button>
+            <button id="bt-xp-csv-trades" class="btn btn-sm btn-ghost"><i class="fa-solid fa-file-csv"></i> CSV: trades</button>
+            <button id="bt-xp-clear" class="btn btn-sm btn-ghost"><i class="fa-solid fa-eraser"></i> Clear</button>
+          </div>
+        </div>
+        <div style="overflow:auto; max-height: 60vh;">
+          <table class="table" id="bt-xp-board">
+            <thead>
+              <tr>
+                <th class="num">#</th>
+                <th>Experiment</th>
+                <th>Ticker</th>
+                <th>Settings</th>
+                <th class="num" title="Trades taken">Trades</th>
+                <th class="num">Win %</th>
+                <th class="num" title="winRate*avgWin − lossRate*avgLoss">Expectancy %</th>
+                <th class="num">Total P/L %</th>
+                <th class="num">Max DD %</th>
+                <th class="num">PF</th>
+                <th class="num">Avg hold (min)</th>
+                <th>Apply</th>
+              </tr>
+            </thead>
+            <tbody id="bt-xp-board-body"></tbody>
+          </table>
+        </div>
+        <div class="muted" style="font-size:11px; margin-top:8px;">
+          Yellow row = sample size below 30 trades, treat with caution.
+          Red row = expectancy ≤ 0%.
+          Click <em>Apply</em> to seed the Engine tab with this experiment's target / stop where the params line up.
+        </div>
+      </div>
+
+      <!-- Existing "ideas" capture card (kept for free-form notes) -->
       <div class="card">
         <div class="card-head">
           <div>
@@ -1201,6 +1287,7 @@
   <script src="js/backtester-investment-planner.js"></script>
   <script src="js/backtester-signal-quality.js"></script>
   <script src="js/backtester-timeframe.js"></script>
+  <script src="js/backtester-experiments.js"></script>
   <script src="js/backtester-ai.js"></script>
   <script src="js/backtester.js"></script>
 </body>

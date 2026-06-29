@@ -7,13 +7,19 @@
 
   function refreshSymbolUnion() {
     var set = new Set();
-    watchlist.forEach(function (w) { if (w.symbol) set.add(w.symbol); });
-    holdings.forEach(function (h)  { if (h.symbol) set.add(h.symbol); });
+    watchlist.forEach(function (w) { if (w.symbol) set.add(String(w.symbol).toUpperCase()); });
+    holdings.forEach(function (h)  { if (h.symbol) set.add(String(h.symbol).toUpperCase()); });
     var list = Array.from(set);
     FinanceQuotes.setSymbols(list);
 
-    // For TradingView ticker tape, prefix common exchanges if possible — TV accepts bare symbol too
-    FinanceTV.tickerTape('tv-ticker-tape', list);
+    // Ticker-tape: dedupe + fall back to a sensible default set when
+    // the user has nothing on the watchlist yet, so the bar never just
+    // shows one symbol over and over.
+    var tapeList = list.slice();
+    if (tapeList.length === 0) {
+      tapeList = ['AMD', 'NVDA', 'TSLA', 'PLTR', 'META', 'AAPL', 'AMZN', 'MSFT'];
+    }
+    FinanceTV.tickerTape('tv-ticker-tape', tapeList);
 
     FinanceCalc.setSymbolList(list);
   }
