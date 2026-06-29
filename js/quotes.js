@@ -13,6 +13,29 @@
   var timer = null;
   var inflight = null;
 
+  // ---------------------------------------------------------------------
+  // Static-host short-circuit.
+  //
+  // The /api/quote endpoint is a Vercel serverless function. GitHub Pages
+  // (where the project also publishes) has no serverless runtime, so the
+  // first request returns 404 and we should not bother retrying \u2014 every
+  // poll cycle would spam the console + toast the user. We disable
+  // polling permanently after the first 404, and skip it up-front when
+  // we detect a hostname that we know does not host /api/*.
+  // ---------------------------------------------------------------------
+  var STATIC_HOSTS = [
+    'github.io',          // GitHub Pages (any *.github.io domain)
+    'localhost',          // local file servers / `python -m http.server`
+    '127.0.0.1',
+    ''                    // file:// protocol leaves hostname empty
+  ];
+  var quotesDisabled = (function () {
+    try {
+      var h = (location.hostname || '').toLowerCase();
+      return STATIC_HOSTS.some(function (s) { return s && h.indexOf(s) !== -1; }) || !h;
+    } catch (_) { return false; }
+  })();
+
   function emit() {
     listeners.forEach(function (fn) {
       try { fn(getSnapshot()); } catch (e) { console.warn('[quotes] listener err', e); }
@@ -58,6 +81,7 @@
 
   async function refreshNow() {
     if (!symbols.size) return;
+    if (quotesDisabled) return;
     if (inflight) return inflight;
     var list = Array.from(symbols).join(',');
     inflight = (async function () {
@@ -68,6 +92,14 @@
           credentials: 'same-origin'
         });
         if (!res.ok) {
+          if (res.status === 404) {
+            // No serverless backend on this host. Disable permanently
+            // so we don't keep polling and spamming the UI.
+            quotesDisabled = true;
+            stopPolling();
+            console.info('[quotes] /api/quote not available on this host \u2014 live quotes disabled.');
+            return;
+          }
           var msg = 'quote ' + res.status;
           try { var j = await res.json(); if (j && j.error) msg += ': ' + j.error; } catch (_) {}
           throw new Error(msg);
@@ -91,7 +123,7 @@
         emit();
       } catch (e) {
         console.warn('[quotes] refresh failed', e);
-        FU.toast('Couldn’t refresh quotes — ' + (e.message || 'network error'), 'err');
+        if (!quotesDisabled) FU.toast('Couldn\u2019t refresh quotes \u2014 ' + (e.message || 'network error'), 'err');
       } finally {
         inflight = null;
       }
@@ -101,6 +133,7 @@
 
   function startPolling() {
     stopPolling();
+    if (quotesDisabled) return; // nothing to poll on static hosts
     timer = setInterval(function () {
       if (!document.hidden) refreshNow();
     }, REFRESH_MS);

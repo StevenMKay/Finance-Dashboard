@@ -6,7 +6,15 @@
   function setWidget(containerId, scriptSrc, config) {
     var host = document.getElementById(containerId);
     if (!host) return;
+    // TradingView's embed scripts look up '.tradingview-widget-container__widget'
+    // via their script tag's parentElement. The parent MUST carry the
+    // 'tradingview-widget-container' class — without it the widget throws
+    // 'Cannot read properties of null (reading querySelector)'. We preserve
+    // any existing class names on the host and just add the TV one.
     host.innerHTML = '';
+    if (!/(^|\s)tradingview-widget-container(\s|$)/.test(host.className || '')) {
+      host.className = (host.className ? host.className + ' ' : '') + 'tradingview-widget-container';
+    }
     var inner = document.createElement('div');
     inner.className = 'tradingview-widget-container__widget';
     host.appendChild(inner);
@@ -89,8 +97,7 @@
       { title: 'Indices', symbols: [
         { s: 'FOREXCOM:SPXUSD', d: 'S&P 500' },
         { s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100' },
-        { s: 'FOREXCOM:DJI',    d: 'Dow 30' },
-        { s: 'INDEX:VIX',       d: 'Volatility' }
+        { s: 'FOREXCOM:DJI',    d: 'Dow 30' }
       ], originalTitle: 'Indices' },
       { title: 'Tech', symbols: [
         { s: 'NASDAQ:AAPL' }, { s: 'NASDAQ:MSFT' }, { s: 'NASDAQ:GOOGL' },
