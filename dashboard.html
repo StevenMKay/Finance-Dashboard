@@ -2,6 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <!--
+    GitHub Pages → Vercel forwarder. Runs FIRST so any visitor who hits
+    the static GH Pages mirror (which has no /api/* serverless functions)
+    is bounced to the Vercel deployment before any other code runs. On
+    Vercel this snippet is a no-op.
+  -->
+  <script>
+    (function () {
+      if (location.hostname === 'stevenmkay.github.io') {
+        var path = location.pathname.replace(/^\/Finance-Dashboard/i, '');
+        location.replace('https://finance-dashboard-omega-blond.vercel.app' + (path || '/') + location.search + location.hash);
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Finance Dashboard</title>
   <meta name="robots" content="noindex,nofollow" />
