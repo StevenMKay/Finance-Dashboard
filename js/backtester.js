@@ -56,7 +56,7 @@
       showError('Engine self-test failed — disabling Run buttons. ' +
         test.results.filter(function (r) { return !r.ok; })
                     .map(function (r) { return r.name + ': ' + r.detail; }).join(' | '));
-      $$('#bt-run, #bt-opt-run, #bt-cmp-run, #bt-mc-run, #bt-ai-rec-run, #bt-ai-sb-run, #bt-ip-run')
+      $$('#bt-run, #bt-opt-run, #bt-cmp-run, #bt-mc-run, #bt-ai-rec-run, #bt-ai-sb-run, #bt-ip-run, #bt-sq-run')
         .forEach(function (b) { b.disabled = true; });
       return;
     }
@@ -72,6 +72,7 @@
     bootCompare();
     bootMonteCarlo();
     bootInvestmentPlanner();
+    bootSignalQuality();
     bootAI();
     if (!state.workerSupported) {
       $('#bt-opt-fallback').style.display = '';
@@ -95,6 +96,7 @@
         if (name === 'charts')      refreshChartsTab();
         if (name === 'replay')      refreshReplayTab();
         if (name === 'planner')     refreshInvestmentPlannerTab();
+        if (name === 'signal')      refreshSignalQualityTab();
         if (name === 'montecarlo')  /* render on demand */;
       });
     });
@@ -1205,6 +1207,115 @@
       },
       plugins: [targetLinePlugin]
     });
+  }
+
+  // ===================================================================
+  // SIGNAL QUALITY TAB — Phase L
+  // ===================================================================
+  function bootSignalQuality() {
+    $('#bt-sq-run').addEventListener('click', runSignalQuality);
+  }
+
+  function refreshSignalQualityTab() {
+    // Sync the first-hour window field with whatever the user picked on
+    // the Engine tab so signal-quality scoring matches their backtest.
+    var w = parseInt($('#bt-trend-window').value, 10);
+    if (isFinite(w) && w > 0 && document.activeElement !== $('#bt-sq-window')) {
+      $('#bt-sq-window').value = w;
+    }
+  }
+
+  function parseNumberList(str) {
+    return String(str || '').split(',').map(function (s) { return parseFloat(s.trim()); })
+                            .filter(function (n) { return isFinite(n) && n > 0; });
+  }
+
+  function runSignalQuality() {
+    showError('');
+    if (!state.engineResult || !state.engineResult.candlesByTicker) {
+      showError('Run the Engine tab first — signal quality scores the candles from your latest backtest.');
+      return;
+    }
+    var opts = {
+      trendWindowMin:  Math.max(5, parseInt($('#bt-sq-window').value, 10) || 60),
+      dipPct:          Math.max(0.1, parseFloat($('#bt-sq-dip').value) || 3),
+      greenTargets:    parseNumberList($('#bt-sq-green-targets').value),
+      recoveryTargets: parseNumberList($('#bt-sq-rec-targets').value),
+      targetSweep:     parseNumberList($('#bt-sq-sweep').value)
+    };
+    if (!opts.greenTargets.length)    opts.greenTargets    = [0.35, 0.5, 1];
+    if (!opts.recoveryTargets.length) opts.recoveryTargets = [0.35, 0.5, 1];
+    if (!opts.targetSweep.length)     opts.targetSweep     = [0.35, 0.5, 0.75, 1, 1.5, 2, 3];
+
+    var report = BTSignalQuality.analyze(state.engineResult.candlesByTicker, opts);
+    renderSignalQuality(report, opts);
+  }
+
+  function renderSignalQuality(report, opts) {
+    $('#bt-sq-empty').style.display = 'none';
+    $('#bt-sq-results-card').style.display = '';
+    $('#bt-sq-settings-line').textContent =
+      'First-hour window ' + opts.trendWindowMin + ' min · ' +
+      'Dip threshold ' + opts.dipPct + '% · ' +
+      'Green targets ' + opts.greenTargets.join('/') + '% · ' +
+      'Recovery targets ' + opts.recoveryTargets.join('/') + '% · ' +
+      'Target sweep ' + opts.targetSweep.join('/') + '%';
+
+    var body = $('#bt-sq-body');
+    var foot = $('#bt-sq-foot');
+    body.innerHTML = '';
+    foot.innerHTML = '';
+
+    Object.keys(report.byTicker).sort().forEach(function (tk) {
+      body.appendChild(buildSignalQualityRow(report.byTicker[tk], opts, false));
+    });
+    foot.appendChild(buildSignalQualityRow(report.overall, opts, true));
+  }
+
+  function buildSignalQualityRow(r, opts, isOverall) {
+    var tr = document.createElement('tr');
+    if (isOverall) {
+      tr.style.background = '#f7fafc';
+      tr.style.fontWeight = '700';
+    }
+    function hitCell(hits, n, total) {
+      if (!total) return tdNum('—');
+      var pct = n / total * 100;
+      return tdNum(n + ' / ' + total + ' <span class="muted" style="font-size:11px;">(' + pct.toFixed(0) + '%)</span>');
+    }
+    function recCell(hits, n, denom) {
+      if (!denom) return tdNum('—');
+      var pct = n / denom * 100;
+      return tdNum(n + ' / ' + denom + ' <span class="muted" style="font-size:11px;">(' + pct.toFixed(0) + '%)</span>');
+    }
+    var bt = r.bestTarget;
+    var bestTargetCell = bt
+      ? bt.targetPct + '% <span class="muted" style="font-size:11px;">(' + bt.tradesTaken + 'tr · WR ' + bt.winRate.toFixed(0) + '%)</span>'
+      : '—';
+    var bestExpCell = bt
+      ? plCell(bt.expectancy)
+      : '—';
+    var falseSigCell = r.signalsTaken
+      ? r.falseSignals + ' / ' + r.signalsTaken +
+        ' <span class="muted" style="font-size:11px;">(' + (r.falseSignalRate * 100).toFixed(0) + '%)</span>'
+      : '—';
+    tr.innerHTML =
+      td(r.ticker, 'sym') +
+      tdNum(r.totalDays) +
+      tdNum(r.greenDays) + tdNum(r.redDays) + tdNum(r.flatDays) +
+      hitCell(r.greenHits,    r.greenHits['0.35']  || 0, r.greenDays) +
+      hitCell(r.greenHits,    r.greenHits['0.5']   || 0, r.greenDays) +
+      hitCell(r.greenHits,    r.greenHits['1']     || 0, r.greenDays) +
+      hitCell(null,           r.redDipDays,             r.redDays) +
+      recCell(r.recoveryHits, r.recoveryHits['0.35'] || 0, r.redDipDays) +
+      recCell(r.recoveryHits, r.recoveryHits['0.5']  || 0, r.redDipDays) +
+      recCell(r.recoveryHits, r.recoveryHits['1']    || 0, r.redDipDays) +
+      tdNum(falseSigCell) +
+      tdNum(plCell(r.avgPostReturn)) +
+      tdNum(plCell(r.medianPostReturn)) +
+      tdNum(bestTargetCell) +
+      tdNum(bestExpCell);
+    return tr;
   }
 
   // ===================================================================

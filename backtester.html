@@ -246,6 +246,7 @@
       <button data-tab="compare"    role="tab"><i class="fa-solid fa-scale-balanced"></i><span class="lbl">Compare</span></button>
       <button data-tab="montecarlo" role="tab"><i class="fa-solid fa-dice"></i><span class="lbl">Monte Carlo</span></button>
       <button data-tab="planner"    role="tab"><i class="fa-solid fa-sack-dollar"></i><span class="lbl">Investment Planner</span></button>
+      <button data-tab="signal"     role="tab"><i class="fa-solid fa-traffic-light"></i><span class="lbl">Signal Quality</span></button>
       <button data-tab="ai"         role="tab"><i class="fa-solid fa-brain"></i><span class="lbl">AI Lab</span></button>
     </nav>
 
@@ -853,6 +854,89 @@
     </section>
 
     <!-- ===================================================================
+         SIGNAL QUALITY TAB
+         =================================================================== -->
+    <section id="tab-signal" class="tab-panel" role="tabpanel">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2><i class="fa-solid fa-traffic-light"></i> First-hour signal quality</h2>
+            <div class="card-sub">
+              For every ticker loaded in the Engine tab, scores how reliable the first-hour direction is as a predictor for the rest of the day. Uses the same bars already in memory — no re-fetch.
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="bt-sq-window">First-hour window (min)</label>
+            <input id="bt-sq-window" class="input" type="number" min="5" max="120" step="5" value="60" />
+          </div>
+          <div class="field">
+            <label for="bt-sq-dip">Red-trend dip threshold (%)</label>
+            <input id="bt-sq-dip" class="input" type="number" min="0.5" max="10" step="0.1" value="3" />
+          </div>
+          <div class="field">
+            <label for="bt-sq-green-targets">Green-day targets (%, comma)</label>
+            <input id="bt-sq-green-targets" class="input" type="text" value="0.35, 0.5, 1" />
+          </div>
+          <div class="field">
+            <label for="bt-sq-rec-targets">Red recovery targets (%, comma)</label>
+            <input id="bt-sq-rec-targets" class="input" type="text" value="0.35, 0.5, 1" />
+          </div>
+          <div class="field">
+            <label for="bt-sq-sweep">Target sweep (%, comma)</label>
+            <input id="bt-sq-sweep" class="input" type="text" value="0.35, 0.5, 0.75, 1, 1.5, 2, 3" />
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <button id="bt-sq-run" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass-chart"></i> Run signal quality report</button>
+            <span class="muted" style="font-size:11px; margin-left:8px;">Run the Engine tab first so the planner has candles to score.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty" id="bt-sq-empty">
+        <i class="fa-regular fa-square-check"></i>
+        Run a backtest on the Engine tab, then click <strong>Run signal quality report</strong>.
+      </div>
+
+      <div class="card" id="bt-sq-results-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>Per-ticker results</h2>
+            <div class="card-sub" id="bt-sq-settings-line"></div>
+          </div>
+        </div>
+        <div style="overflow:auto; max-height: 60vh;">
+          <table class="table" id="bt-sq-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th class="num" title="Number of trading days tested">Days</th>
+                <th class="num" title="First-hour green days">Green</th>
+                <th class="num" title="First-hour red days">Red</th>
+                <th class="num" title="First-hour flat / no-signal days">Flat</th>
+                <th class="num" title="Green first hour → later hit +0.35%">G→+0.35%</th>
+                <th class="num" title="Green first hour → later hit +0.5%">G→+0.5%</th>
+                <th class="num" title="Green first hour → later hit +1%">G→+1%</th>
+                <th class="num" title="Red first hour → later hit dip threshold">R→Dip</th>
+                <th class="num" title="Red → dip → recovered +0.35%">R→Dip→+0.35%</th>
+                <th class="num" title="Red → dip → recovered +0.5%">R→Dip→+0.5%</th>
+                <th class="num" title="Red → dip → recovered +1%">R→Dip→+1%</th>
+                <th class="num" title="Acted signals that failed the smallest target">False sig</th>
+                <th class="num" title="Average return from first-hour close to close">Avg post</th>
+                <th class="num" title="Median return from first-hour close to close">Median post</th>
+                <th class="num" title="Target with the highest expectancy across all signals">Best target</th>
+                <th class="num" title="Expectancy at best target (signed avg P/L %)">Best E</th>
+              </tr>
+            </thead>
+            <tbody id="bt-sq-body"></tbody>
+            <tfoot id="bt-sq-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
          AI LAB TAB
          =================================================================== -->
     <section id="tab-ai" class="tab-panel" role="tabpanel">
@@ -910,6 +994,7 @@
   <script src="/js/backtester-charts.js"></script>
   <script src="/js/backtester-replay.js"></script>
   <script src="/js/backtester-investment-planner.js"></script>
+  <script src="/js/backtester-signal-quality.js"></script>
   <script src="/js/backtester-ai.js"></script>
   <script src="/js/backtester.js"></script>
 </body>
