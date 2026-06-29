@@ -630,11 +630,18 @@
     return s;
   }
   function exportCsv(rows, kind) {
+    // PHASE 1: every CSV starts with the shared disclaimer header so the
+    // file is clearly labelled even after it leaves the app. The helper
+    // lives on window.BTCsvHeader (set by js/backtester.js) so changing
+    // the wording in one place updates every export.
+    var disclaimer = (window.BTCsvHeader)
+      ? window.BTCsvHeader('Experiments — ' + (kind === 'trades' ? 'trade detail' : 'leaderboard'))
+      : [];
     if (kind === 'trades') {
       var header = ['experiment','ticker','date','entryTime','exitTime',
         'rawBuyPrice','rawSellPrice','buyPrice','sellPrice','profitPct',
         'exitReason','holdingMinutes','mfePct','maePct'];
-      var lines = [header.join(',')];
+      var lines = disclaimer.concat([header.join(',')]);
       rows.forEach(function (r) {
         (r.trades || []).forEach(function (t) {
           lines.push([
@@ -652,7 +659,7 @@
     // leaderboard
     var head = ['rank','experiment','ticker','settings','trades','winRate%',
       'expectancy%','totalPL%','maxDD%','profitFactor','avgHoldMin','sampleWarning'];
-    var lines = [head.join(',')];
+    var lines = disclaimer.concat([head.join(',')]);
     rankRows(rows).forEach(function (r, i) {
       lines.push([
         i + 1, r.experimentName, r.ticker,

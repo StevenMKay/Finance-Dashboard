@@ -301,9 +301,9 @@
       position: fixed;
       top: 0; left: 0; bottom: 0;
       width: 280px; max-width: 86vw;
-      background: var(--c-header);
+      background: var(--c-brand-dark);
       color: var(--c-text-onDark);
-      box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+      box-shadow: 4px 0 24px rgba(3, 62, 62, 0.35);
       transform: translateX(-100%);
       transition: transform 0.25s ease;
       z-index: 900;
@@ -313,8 +313,8 @@
     .bt-sidebar-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+      border-bottom: 3px solid var(--c-accent);
+      background: var(--c-brand);
     }
     .bt-sidebar-head strong { font-size: 15px; letter-spacing: 0.3px; }
     .bt-sidebar-close {
@@ -331,23 +331,23 @@
     .bt-sidebar nav a {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 18px;
-      color: #cbd5e1;
+      color: #DDF5F2;
       font-size: 14px; font-weight: 500;
       text-decoration: none;
       border-left: 3px solid transparent;
       transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
-    .bt-sidebar nav a i { width: 18px; text-align: center; color: var(--c-grad-2); }
+    .bt-sidebar nav a i { width: 18px; text-align: center; color: var(--c-accent); }
     .bt-sidebar nav a:hover {
       background: rgba(255,255,255,0.06);
       color: #fff;
-      border-left-color: var(--c-grad-2);
+      border-left-color: var(--c-accent);
       text-decoration: none;
     }
     .bt-sidebar-foot {
       padding: 12px 16px;
       border-top: 1px solid rgba(255,255,255,0.08);
-      font-size: 11px; color: #94a3b8;
+      font-size: 11px; color: #9FC4C0;
     }
 
     /* ============================================================
@@ -358,20 +358,20 @@
       padding: 8px 14px;
       border: 0;
       border-radius: 999px;
-      background: linear-gradient(135deg, var(--c-grad-1), var(--c-grad-2));
+      background: linear-gradient(135deg, var(--c-brand) 0%, var(--c-brand-light) 100%);
       color: #fff;
       font-size: 12px; font-weight: 700;
       letter-spacing: 0.3px;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 8px rgba(3, 62, 62, 0.25);
       transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     }
     .bt-howto-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.32);
-      filter: brightness(1.06);
+      box-shadow: 0 4px 14px rgba(3, 62, 62, 0.32);
+      filter: brightness(1.08);
     }
-    .bt-howto-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .bt-howto-btn:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
 
     .bt-modal {
       position: fixed; inset: 0;
@@ -399,8 +399,8 @@
     .bt-modal-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 18px;
-      border-bottom: 1px solid var(--c-border-soft);
-      background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+      border-bottom: 3px solid var(--c-accent);
+      background: var(--c-brand);
       color: #fff;
       border-radius: var(--r-lg) var(--r-lg) 0 0;
     }
@@ -434,40 +434,281 @@
       .bt-howto-btn { padding: 7px 11px; font-size: 11px; }
       .bt-howto-btn .lbl-full { display: none; }
     }
+
+    /* ============================================================
+       PHASE 1 — Account dropdown (top-right Google photo)
+       ------------------------------------------------------------
+       LONG-TERM NOTE: This block is intentionally page-local for now
+       so changes to the Strategy Lab header cannot affect dashboard.html.
+       When you're ready to share the avatar across pages, lift these
+       rules into /css/style.css and remove this block. The JS module
+       (js/bt-header.js) is already page-agnostic — it only needs the
+       same IDs (#bt-acct-btn, #bt-acct-panel, #bt-acct-avatar).
+       MOBILE: dropdown widens to 86vw < 600px so menu items stay
+       readable on phones; keep the @media rule below intact.
+       ============================================================ */
+    .bt-acct {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .bt-acct-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 10px 4px 4px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: var(--c-text-onDark);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      min-height: 36px;
+    }
+    .bt-acct-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+    .bt-acct-btn:focus-visible { outline: 2px solid var(--c-grad-2); outline-offset: 2px; }
+    .bt-acct-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      color: var(--c-brand-dark);
+      font-weight: 700; font-size: 13px;
+      display: inline-flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.85);
+      flex-shrink: 0;
+    }
+    .bt-acct-avatar.has-photo { background: #fff; }
+    .bt-acct-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bt-acct-name {
+      max-width: 160px; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
+      font-size: 13px; color: #DDF5F2;
+    }
+    .bt-acct-caret { font-size: 10px; color: #9FC4C0; }
+
+    .bt-acct-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 240px;
+      background: #fff;
+      color: var(--c-text);
+      border: 1px solid var(--c-border);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-2);
+      padding: 6px;
+      display: none;
+      z-index: 700;
+      animation: btAcctPop 0.15s ease;
+    }
+    .bt-acct-panel.show { display: block; }
+    @keyframes btAcctPop {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bt-acct-menu { display: flex; flex-direction: column; }
+
+    /* Shared menu-item style used by both sidebar nav and account dropdown */
+    .bt-menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: transparent;
+      border: 0;
+      color: var(--c-text-soft);
+      font-size: 13px; font-weight: 500;
+      text-decoration: none;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      min-height: 40px;
+      font-family: inherit;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .bt-menu-item i { width: 16px; text-align: center; color: var(--c-text-muted); }
+    .bt-menu-item:hover { background: var(--c-bg-soft); color: var(--c-text); text-decoration: none; }
+    .bt-menu-item:focus-visible { outline: 2px solid var(--c-grad-2); outline-offset: 1px; }
+    .bt-menu-divider {
+      height: 1px; background: var(--c-border-soft);
+      margin: 4px 8px;
+    }
+    /* Inside the dark sidebar, the menu items invert to keep contrast. */
+    .bt-sidebar .bt-menu-item { color: #cbd5e1; }
+    .bt-sidebar .bt-menu-item i { color: var(--c-grad-2); }
+    .bt-sidebar .bt-menu-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .bt-sidebar .bt-menu-divider { background: rgba(255,255,255,0.08); }
+
+    /* ============================================================
+       PHASE 1 — Disclaimer aside (reusable per-tab + footer)
+       ------------------------------------------------------------
+       Drop <aside class="bt-disclaimer">...</aside> into any tab
+       where the "research-only" message should appear. Style is
+       intentionally calm (not alarming) so it doesn't compete with
+       real warnings (mock banner, error banner).
+       ============================================================ */
+    .bt-disclaimer {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 14px;
+      background: var(--c-bg-soft);
+      border: 1px solid var(--c-border);
+      border-left: 3px solid var(--c-grad-2);
+      border-radius: var(--r-sm);
+      color: var(--c-text-soft);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: var(--s-4);
+    }
+    .bt-disclaimer i { color: var(--c-grad-2); margin-top: 2px; font-size: 13px; flex-shrink: 0; }
+    .bt-disclaimer strong { color: var(--c-text); }
+
+    /* ============================================================
+       PHASE 1 — Page footer (Career Solutions branding + legal)
+       ------------------------------------------------------------
+       MOBILE: footer wraps into 2 stacked rows < 480px; touch targets
+       on the legal links are 44px tall. Do not change the flex-wrap.
+       ============================================================ */
+    #bt-footer {
+      margin-top: var(--s-7);
+      padding: var(--s-4) var(--s-5);
+      background: var(--c-brand-dark);
+      color: #DDF5F2;
+      font-size: 12px;
+      border-top: 3px solid var(--c-accent);
+    }
+    #bt-footer .inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center; justify-content: space-between;
+    }
+    #bt-footer .disclaimer {
+      flex: 1 1 100%;
+      color: #FFE2A8;
+      background: rgba(244, 183, 64, 0.10);
+      border-left: 3px solid var(--c-accent);
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    #bt-footer .copy { color: #9FC4C0; }
+    #bt-footer .links { display: flex; flex-wrap: wrap; gap: 14px; }
+    #bt-footer .links a, #bt-footer .links button {
+      color: #DDF5F2; background: transparent; border: 0;
+      cursor: pointer; font-size: 12px;
+      padding: 8px 4px; min-height: 36px;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    #bt-footer .links a:hover, #bt-footer .links button:hover {
+      color: var(--c-grad-2); text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .bt-acct-name { display: none; }
+      .bt-acct-caret { display: none; }
+      .bt-acct-panel { min-width: 86vw; right: -10px; }
+      #bt-footer .inner { gap: 8px; }
+      #bt-footer .links { width: 100%; justify-content: flex-start; }
+    }
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
+      <!--
+        Top-left brand icon → opens the slide-in sidebar (js/bt-header.js).
+        Sidebar menu items live in MENU_ITEMS inside that module — do NOT
+        hardcode <a> tags inside #bt-sidebar nav. Adding a link here means
+        adding one line to MENU_ITEMS.
+      -->
       <button id="bt-menu-btn" class="bt-menu-trigger" type="button" aria-label="Open menu" aria-controls="bt-sidebar" aria-expanded="false" title="Open menu">
         <i class="fa-solid fa-chart-line"></i>
       </button>
       <span>Finance Dashboard</span>
     </div>
     <div class="user">
+      <!--
+        "How to use" pill — opens #bt-howto-modal. Same modal is also
+        reachable from the sidebar and the account dropdown so beginners
+        can always find it.
+      -->
       <button id="bt-howto-btn" class="bt-howto-btn" type="button" title="How to use the Strategy Lab">
         <i class="fa-solid fa-circle-question"></i><span class="lbl-full">How to use</span>
       </button>
-      <a href="dashboard.html" class="btn btn-sm btn-ghost" title="Back to dashboard">
-        <i class="fa-solid fa-arrow-left"></i><span>Dashboard</span>
-      </a>
-      <span class="email" id="hdr-email">—</span>
-      <button id="btn-signout" class="btn btn-sm btn-ghost" title="Sign out">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Sign out</span>
-      </button>
+      <!--
+        Account dropdown — Google login photo on the right.
+        MOBILE: avatar-only on screens < 600px; the name + caret hide via CSS.
+        Photo source priority lives in js/bt-header.js applyAvatarPhoto():
+          user.photoURL  →  Firestore users/{uid}.photoUrl  →  initial letter.
+      -->
+      <div class="bt-acct">
+        <button id="bt-acct-btn" class="bt-acct-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="bt-acct-panel" title="Account">
+          <span id="bt-acct-avatar" class="bt-acct-avatar" aria-hidden="true">A</span>
+          <span id="bt-acct-name" class="bt-acct-name">Account</span>
+          <i class="fa-solid fa-chevron-down bt-acct-caret" aria-hidden="true"></i>
+        </button>
+        <div id="bt-acct-panel" class="bt-acct-panel" role="menu" aria-label="Account menu">
+          <div class="bt-acct-menu"><!-- populated by js/bt-header.js renderMenu() --></div>
+        </div>
+      </div>
     </div>
   </header>
   <div class="gradient-bar"></div>
 
   <main class="app-main">
-    <div class="card" style="margin-bottom: var(--s-4);">
-      <div class="card-head" style="margin-bottom: 0;">
+    <!-- =================================================================
+         PHASE 2 — Premium hero card
+         Replaces the small "Strategy Lab" card with a teal-gradient hero
+         that surfaces the current research context (tickers, strategy,
+         preset, date range) plus a primary Run button. Chips are
+         populated by js/backtester.js when state changes — if a chip
+         has no value, JS hides it (flex-wrap means the layout stays
+         tidy).  MOBILE: hero CTA becomes full-width < 600px (CSS).
+         ================================================================= -->
+    <section class="hero-card" aria-label="Strategy Lab overview">
+      <div class="hero-head">
         <div>
-          <h2><i class="fa-solid fa-flask"></i> Strategy Lab</h2>
-          <div class="card-sub">First-hour trend strategy laboratory — engine, optimizer, charts, replay, Monte Carlo, AI.</div>
+          <h1 class="hero-title"><i class="fa-solid fa-flask" aria-hidden="true"></i> &nbsp;Strategy Laboratory</h1>
+          <p class="hero-tags">
+            <span>Research</span><span>Optimize</span><span>Compare</span><span>Improve</span>
+          </p>
+          <p class="hero-sub">Historical backtesting powered by Polygon.io &middot; every tab shares the same in-memory result.</p>
+        </div>
+        <button id="bt-hero-run" class="hero-cta" type="button" title="Run the current Engine configuration">
+          <i class="fa-solid fa-play" aria-hidden="true"></i> Run backtest
+        </button>
+      </div>
+      <!-- Context chips. Populated by js/backtester.js updateHeroChips().
+           Each chip is hidden when its <span class="val"> is empty so
+           the hero stays calm before the first run. -->
+      <div class="hero-chips" id="bt-hero-chips" aria-live="polite">
+        <div class="hero-chip" data-chip="tickers">
+          <span class="lbl">Selected tickers</span>
+          <span class="val" id="bt-hero-tickers">AMD, NVDA, TSLA</span>
+        </div>
+        <div class="hero-chip" data-chip="strategy">
+          <span class="lbl">Strategy</span>
+          <span class="val" id="bt-hero-strategy">First-hour trend</span>
+        </div>
+        <div class="hero-chip" data-chip="preset">
+          <span class="lbl">Preset</span>
+          <span class="val" id="bt-hero-preset">Default</span>
+        </div>
+        <div class="hero-chip" data-chip="range">
+          <span class="lbl">Date range</span>
+          <span class="val" id="bt-hero-range">Last 90 days</span>
         </div>
       </div>
-    </div>
+      <!-- Quick stats row — populated after a backtest run. Stays empty
+           (display:none) until js/backtester.js renderHeroStats() is
+           called with real numbers. -->
+      <div class="hero-stats" id="bt-hero-stats" style="display:none;">
+        <span class="stat"><strong id="bt-hero-stat-trades">—</strong> trades</span>
+        <span class="stat"><strong id="bt-hero-stat-win">—</strong> win rate</span>
+        <span class="stat"><strong id="bt-hero-stat-pl">—</strong> total P/L</span>
+        <span class="stat"><strong id="bt-hero-stat-dd">—</strong> max DD</span>
+      </div>
+    </section>
 
     <!-- Global error / mock banners (visible on every tab) -->
     <div class="bt-banner" id="bt-mock-banner" style="display:none;">
@@ -499,6 +740,17 @@
          ENGINE TAB
          =================================================================== -->
     <section id="tab-engine" class="tab-panel active" role="tabpanel">
+      <!--
+        Disclaimer aside — reusable component. Drop <aside class="bt-disclaimer">...</aside>
+        into any tab where the "research-only" message should appear. Copy is
+        intentionally identical across tabs and the footer so users always
+        see the same wording.
+      -->
+      <aside class="bt-disclaimer" role="note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span><strong>Research and simulation only.</strong> Backtested results do not guarantee future performance. This is not financial advice.</span>
+      </aside>
+
       <div class="card">
         <div class="card-head">
           <div>
@@ -966,6 +1218,11 @@
          INVESTMENT PLANNER TAB
          =================================================================== -->
     <section id="tab-planner" class="tab-panel" role="tabpanel">
+      <aside class="bt-disclaimer" role="note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span><strong>Research and simulation only.</strong> Position sizes here are derived from backtested trades. Real-world performance can differ materially. This is not financial advice.</span>
+      </aside>
+
       <div class="card">
         <div class="card-head">
           <div>
@@ -1404,6 +1661,11 @@
          AI LAB TAB
          =================================================================== -->
     <section id="tab-ai" class="tab-panel" role="tabpanel">
+      <aside class="bt-disclaimer" role="note">
+        <i class="fa-solid fa-circle-info"></i>
+        <span><strong>Research and simulation only.</strong> AI summaries and suggested strategies are starting points — review them before relying on the output. Not financial advice.</span>
+      </aside>
+
       <div class="bt-banner" id="bt-ai-disabled" style="display:none;">
         <i class="fa-solid fa-circle-info"></i>
         <span><strong>AI features are off.</strong> Set <code>OPENAI_API_KEY</code> on the server to enable. Every other tab keeps working.</span>
@@ -1439,6 +1701,9 @@
 
   <!-- ============================================================
        Slide-in sidebar (triggered by the brand icon, top-left)
+       Nav items rendered by js/bt-header.js — do NOT hardcode <a>
+       tags inside <nav> below. To add a menu item, edit MENU_ITEMS
+       in js/bt-header.js.
        ============================================================ -->
   <div id="bt-backdrop" class="bt-backdrop" aria-hidden="true"></div>
   <aside id="bt-sidebar" class="bt-sidebar" role="dialog" aria-label="Navigation menu" aria-modal="true" aria-hidden="true">
@@ -1448,12 +1713,10 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
-    <nav>
-      <a href="#" data-placeholder>
-        <i class="fa-solid fa-link"></i> Placeholder link
-      </a>
-    </nav>
-    <div class="bt-sidebar-foot">More options coming soon.</div>
+    <nav><!-- populated by js/bt-header.js renderMenu(MENU_ITEMS) --></nav>
+    <div class="bt-sidebar-foot">
+      Career Solutions for Today · Strategy Lab
+    </div>
   </aside>
 
   <!-- ============================================================
@@ -1505,67 +1768,36 @@
     </div>
   </div>
 
-  <script>
-    // Sidebar + How-to modal wiring. Self-contained, no external deps.
-    (function () {
-      const menuBtn      = document.getElementById('bt-menu-btn');
-      const sidebar      = document.getElementById('bt-sidebar');
-      const backdrop     = document.getElementById('bt-backdrop');
-      const sidebarClose = document.getElementById('bt-sidebar-close');
-      const howtoBtn     = document.getElementById('bt-howto-btn');
-      const howtoModal   = document.getElementById('bt-howto-modal');
-      const howtoClose   = document.getElementById('bt-howto-close');
-
-      function openSidebar() {
-        sidebar.classList.add('show');
-        backdrop.classList.add('show');
-        sidebar.setAttribute('aria-hidden', 'false');
-        menuBtn.setAttribute('aria-expanded', 'true');
-      }
-      function closeSidebar() {
-        sidebar.classList.remove('show');
-        sidebar.setAttribute('aria-hidden', 'true');
-        menuBtn.setAttribute('aria-expanded', 'false');
-        if (!howtoModal.classList.contains('show')) backdrop.classList.remove('show');
-      }
-      function openHowto() {
-        howtoModal.classList.add('show');
-        backdrop.classList.add('show');
-        howtoModal.setAttribute('aria-hidden', 'false');
-      }
-      function closeHowto() {
-        howtoModal.classList.remove('show');
-        howtoModal.setAttribute('aria-hidden', 'true');
-        if (!sidebar.classList.contains('show')) backdrop.classList.remove('show');
-      }
-
-      if (menuBtn)      menuBtn.addEventListener('click', openSidebar);
-      if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
-      if (howtoBtn)     howtoBtn.addEventListener('click', openHowto);
-      if (howtoClose)   howtoClose.addEventListener('click', closeHowto);
-
-      if (backdrop) backdrop.addEventListener('click', function () {
-        closeSidebar();
-        closeHowto();
-      });
-
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          if (sidebar.classList.contains('show')) closeSidebar();
-          if (howtoModal.classList.contains('show')) closeHowto();
-        }
-      });
-
-      // Close the modal if user clicks the dark area outside the card.
-      howtoModal.addEventListener('click', function (e) {
-        if (e.target === howtoModal) closeHowto();
-      });
-    })();
-  </script>
+  <!-- ============================================================
+       Page footer — Career Solutions branding + legal + disclaimer
+       ------------------------------------------------------------
+       The disclaimer is duplicated inside Engine / Planner / AI tabs
+       as <aside class="bt-disclaimer">. Footer is the always-visible
+       fallback. MOBILE: footer rows stack via flex-wrap; links share
+       a row and grow tap targets to 36px.
+       ============================================================ -->
+  <footer id="bt-footer">
+    <div class="inner">
+      <p class="disclaimer">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        &nbsp;<strong>Research and simulation only.</strong>
+        Backtested results do not guarantee future performance. This is not financial advice.
+      </p>
+      <span class="copy">&copy; <span id="bt-footer-year">2026</span> Career Solutions for Today. All rights reserved.</span>
+      <span class="links">
+        <button type="button" data-bt-open="terms">Terms of Use</button>
+        <button type="button" data-bt-open="privacy">Privacy Policy</button>
+        <button type="button" data-bt-open="how-ai">How AI is Used</button>
+        <button type="button" data-bt-open="about">About</button>
+      </span>
+    </div>
+  </footer>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <!-- Firestore compat — needed for saved profile photo, presets, leaderboard sync (Phases 1-5). -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <!-- Chart.js + matrix plugin (heatmap) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1578,6 +1810,12 @@
   <script src="js/firebase-init.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>
+
+  <!-- Page chrome (header, sidebar, footer, account dropdown, legal modals).
+       Loaded before backtester.js so BTHeader.init(user) is callable from
+       inside FinanceAuth.requireAuth(). -->
+  <script src="js/bt-legal-modals.js"></script>
+  <script src="js/bt-header.js"></script>
 
   <!-- Strategy Lab: engine first (pure math), then page modules -->
   <script src="js/backtester-engine.js"></script>

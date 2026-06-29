@@ -1,57 +1,97 @@
 /* ============================================================
-   Finance Dashboard — design tokens lifted from PMSite.html
-   Navy header + purple/orange/red gradient bar + green primary
+   Finance Dashboard â€” design tokens (2026 refresh)
+   ------------------------------------------------------------
+   Teal-forward palette inspired by premium financial research
+   platforms (TradingView / Koyfin / Snowflake polish).
+
+   LONG-TERM NOTE: keep using these CSS custom properties
+   instead of hardcoding hex values. Pages re-skin themselves
+   when you change tokens in one place. The legacy --c-grad-1/2/3
+   aliases are kept so existing page-local CSS in backtester.html,
+   resumebuilder.html, etc. keeps rendering without changes.
    ============================================================ */
 
 :root {
-  /* Brand */
-  --c-header:        #1a2744;
-  --c-grad-1:        #8e44ad;
-  --c-grad-2:        #f39c12;
-  --c-grad-3:        #e74c3c;
+  /* ====== Brand (teal) ====== */
+  --c-brand:         #055050;
+  --c-brand-hover:   #066060;
+  --c-brand-dark:    #033E3E;
+  --c-brand-light:   #0D7A7A;
+  --c-brand-50:      #EEF8F7;   /* lightest tint */
+  --c-brand-100:     #DDF5F2;
+  --c-brand-200:     #CFE4E1;
+  --c-brand-300:     #D9ECE9;   /* card border */
 
-  /* Surfaces */
-  --c-bg:            #f1f3f6;
-  --c-bg-soft:       #f8f9fa;
-  --c-card:          #ffffff;
-  --c-border:        #d0d5dd;
-  --c-border-soft:   #e9ecef;
-  --c-divider:       #e2e8f0;
+  /* Legacy alias â€” some pages still set var(--c-header) directly. */
+  --c-header:        var(--c-brand);
 
-  /* Text */
-  --c-text:          #1a202c;
-  --c-text-soft:     #4a5568;
-  --c-text-muted:    #718096;
-  --c-text-onDark:   #f8f9fa;
+  /* Warm accent (header underline, gold icon highlights only) */
+  --c-accent:        #F4B740;
+  --c-accent-soft:   #F0A830;
 
-  /* Actions */
-  --c-primary:       #27ae60;
-  --c-primary-hover: #219a52;
-  --c-blue:          #2980b9;
-  --c-blue-hover:    #1f6391;
+  /* Legacy gradient tokens â€” re-mapped to teal so any older
+     component that still references them inherits the new look. */
+  --c-grad-1:        var(--c-brand);
+  --c-grad-2:        var(--c-accent);
+  --c-grad-3:        #20B26B;
 
-  /* Status */
-  --c-up:            #2f9e44;
-  --c-up-bg:         rgba(56, 161, 105, 0.12);
-  --c-down:          #c0392b;
-  --c-down-bg:       rgba(229, 62, 62, 0.10);
-  --c-warn:          #dd6b20;
-  --c-warn-bg:       rgba(221, 107, 32, 0.12);
+  /* ====== Surfaces ====== */
+  --c-bg:            #F6FCFC;
+  --c-bg-soft:       #EEF8F7;
+  --c-bg-alt:        #FBFEFD;   /* alternate table row */
+  --c-card:          #FFFFFF;
+  --c-border:        #D9ECE9;
+  --c-border-soft:   #E2EEEC;
+  --c-divider:       #E6F1EF;
 
-  /* Radius / shadow */
-  --r-sm: 4px;
-  --r-md: 7px;
-  --r-lg: 10px;
-  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-2: 0 6px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
+  /* ====== Text ====== */
+  --c-text:          #0F2A2A;   /* deep teal-black, WCAG AA on white */
+  --c-text-soft:     #335959;
+  --c-text-muted:    #5C7A7A;
+  --c-text-onDark:   #F6FCFC;
 
-  /* Spacing scale */
+  /* ====== Actions ====== */
+  --c-primary:       #0C8A6A;
+  --c-primary-hover: #087A5F;
+  --c-blue:          #0D7A7A;   /* re-purposed: brand-light */
+  --c-blue-hover:    #066060;
+
+  /* ====== Status ====== */
+  --c-up:            #20B26B;
+  --c-up-bg:         rgba(32, 178, 107, 0.12);
+  --c-down:          #D9534F;
+  --c-down-bg:       rgba(217, 83, 79, 0.10);
+  --c-warn:          #F4B740;
+  --c-warn-bg:       rgba(244, 183, 64, 0.16);
+  --c-info:          #42C7E8;
+  --c-info-bg:       rgba(66, 199, 232, 0.12);
+
+  /* ====== Charts (read by JS via getComputedStyle if needed) ======
+     Equity, benchmark, drawdown, monte-carlo, heatmap gradient. */
+  --chart-equity:    #20B26B;
+  --chart-benchmark: #42C7E8;
+  --chart-drawdown:  #D9534F;
+  --chart-monte:     #67D9DA;
+  --chart-heat-1:    #CCEDE9;
+  --chart-heat-2:    #67D9DA;
+  --chart-heat-3:    #0D7A7A;
+  --chart-heat-4:    #055050;
+
+  /* ====== Radius / shadow ====== */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --shadow-1: 0 4px 14px rgba(5, 80, 80, 0.06);
+  --shadow-2: 0 8px 24px rgba(5, 80, 80, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(13, 122, 122, 0.18);
+
+  /* ====== Spacing / layout ====== */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
   --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 48px;
 
-  /* Layout */
   --header-h: 56px;
-  --grad-bar-h: 4px;
+  --grad-bar-h: 3px;
   --container-max: 1400px;
 }
 
@@ -62,33 +102,37 @@ html, body {
   padding: 0;
   background: var(--c-bg);
   color: var(--c-text);
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Cyan gradient page background — sits behind the navy header + content.
-   Fixed attachment so it covers the full viewport when the user scrolls. */
+/* Soft teal page background â€” sits behind the brand header + content.
+   Fixed attachment so it covers the full viewport while scrolling.
+   MOBILE: gradient still looks clean on phones; do not flip to a
+   colorful gradient or you'll break the calm/data-focused feel. */
 body {
   background:
-    linear-gradient(135deg,
-      #e0f7fa 0%,
-      #b2ebf2 25%,
-      #80deea 55%,
-      #4dd0e1 85%,
-      #26c6da 100%);
+    linear-gradient(
+      180deg,
+      #CCEDE9 0%,
+      #EAF8F6 38%,
+      #F6FCFC 72%,
+      #FFFFFF 100%
+    );
   background-attachment: fixed;
   background-repeat: no-repeat;
   min-height: 100vh;
 }
 
-a { color: var(--c-blue); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--c-brand-light); text-decoration: none; }
+a:hover { color: var(--c-brand); text-decoration: underline; }
 
 h1, h2, h3, h4 { margin: 0 0 var(--s-3); color: var(--c-text); }
-h1 { font-size: 28px; font-weight: 700; }
-h2 { font-size: 22px; font-weight: 700; }
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.2px; }
+h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.15px; }
 h3 { font-size: 17px; font-weight: 600; }
 h4 { font-size: 14px; font-weight: 600; color: var(--c-text-soft); text-transform: uppercase; letter-spacing: 0.3px; }
 
@@ -98,14 +142,14 @@ button { font-family: inherit; }
    App shell
    ============================================================ */
 .app-header {
-  background: var(--c-header);
+  background: var(--c-brand);
   color: var(--c-text-onDark);
   padding: 0 var(--s-5);
   height: var(--header-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(3, 62, 62, 0.18);
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 600;
@@ -114,16 +158,19 @@ button { font-family: inherit; }
   display: flex; align-items: center; gap: var(--s-3);
   font-size: 16px; font-weight: 700; letter-spacing: 0.2px;
 }
-.app-header .brand i { color: var(--c-grad-2); }
+.app-header .brand i { color: var(--c-accent); }
 .app-header .user {
   display: flex; align-items: center; gap: var(--s-3);
-  font-size: 13px; color: #cbd5e1;
+  font-size: 13px; color: #DDF5F2;
 }
 .app-header .user .email { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Thin orange accent line under the header â€” keeps brand warmth
+   without competing with content. Do NOT thicken; it's intentionally
+   subtle so the page feels calm. */
 .gradient-bar {
   height: var(--grad-bar-h);
-  background: linear-gradient(90deg, var(--c-grad-1) 0%, var(--c-grad-2) 50%, var(--c-grad-3) 100%);
+  background: linear-gradient(90deg, var(--c-accent) 0%, var(--c-accent-soft) 100%);
   position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 599;
 }
 
@@ -142,6 +189,7 @@ button { font-family: inherit; }
   padding: var(--s-2);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-1);
+  border: 1px solid var(--c-border);
   margin-bottom: var(--s-5);
   overflow-x: auto;
   scrollbar-width: thin;
@@ -156,15 +204,16 @@ button { font-family: inherit; }
   color: var(--c-text-soft);
   font-size: 13px; font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   white-space: nowrap;
 }
-.tabbar button:hover { background: var(--c-bg-soft); color: var(--c-text); }
+.tabbar button:hover { background: var(--c-brand-50); color: var(--c-brand); }
 .tabbar button.active {
-  background: var(--c-header);
-  color: var(--c-text-onDark);
-  border-color: var(--c-header);
+  background: var(--c-brand);
+  color: #fff;
+  border-color: var(--c-brand);
 }
+.tabbar button.active:hover { background: var(--c-brand-hover); }
 .tabbar button i { font-size: 13px; }
 
 .tab-panel { display: none; }
@@ -176,16 +225,18 @@ button { font-family: inherit; }
 }
 
 /* ============================================================
-   Cards
+   Cards â€” elevated, rounded, soft teal shadow
    ============================================================ */
 .card {
   background: var(--c-card);
   border: 1px solid var(--c-border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--s-5);
   box-shadow: var(--shadow-1);
   margin-bottom: var(--s-5);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+.card:hover { box-shadow: var(--shadow-2); }
 .card-head {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: var(--s-4);
@@ -194,6 +245,38 @@ button { font-family: inherit; }
 }
 .card-head h2, .card-head h3 { margin: 0; }
 .card-sub { color: var(--c-text-muted); font-size: 12px; margin-top: 2px; }
+
+/* ============================================================
+   Section title bar â€” use above any major section to anchor it
+   in the brand. Wrap a section's contents with:
+     <div class="section">
+       <div class="section-title-bar"><i class="..."></i> Portfolio</div>
+       <div class="section-body"> ... cards ... </div>
+     </div>
+   ============================================================ */
+.section { margin-bottom: var(--s-6); }
+.section-title-bar {
+  background: var(--c-brand);
+  color: #fff;
+  padding: 10px var(--s-4);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.2px;
+  display: flex; align-items: center; gap: var(--s-2);
+}
+.section-title-bar i { color: var(--c-accent); }
+.section-title-bar .sub {
+  margin-left: auto;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.4px;
+  text-transform: uppercase; color: rgba(255, 255, 255, 0.75);
+}
+.section-body {
+  background: #fff;
+  border: 1px solid var(--c-border);
+  border-top: 0;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  padding: var(--s-5);
+}
+.section-body > .card:last-child { margin-bottom: 0; }
 
 /* KPI tile grid (Overview) */
 .kpi-grid {
@@ -205,32 +288,33 @@ button { font-family: inherit; }
 .kpi {
   background: var(--c-card);
   border: 1px solid var(--c-border);
-  border-left: 3px solid var(--c-blue);
+  border-left: 3px solid var(--c-brand-light);
   border-radius: var(--r-lg);
   padding: var(--s-4) var(--s-5);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-1);
   position: relative;
   overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .kpi::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
-  opacity: 0.85;
+  background: linear-gradient(90deg, var(--c-brand) 0%, var(--c-brand-light) 60%, var(--c-accent) 100%);
+  opacity: 0.7;
 }
 .kpi:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-2);
 }
 .kpi .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--c-text-muted); }
-.kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: var(--c-text); line-height: 1.1; }
-.kpi .delta { font-size: 12px; font-weight: 600; margin-top: 4px; }
+.kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: var(--c-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi .delta { font-size: 12px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .kpi.up    { border-left-color: var(--c-up); }
 .kpi.down  { border-left-color: var(--c-down); }
 .kpi.warn  { border-left-color: var(--c-warn); }
+.kpi.info  { border-left-color: var(--c-info); }
 
 /* ============================================================
    Buttons & form controls
@@ -243,26 +327,41 @@ button { font-family: inherit; }
   font-size: 13px; font-weight: 600;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--c-bg-soft);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.05s ease, box-shadow 0.18s ease;
+  background: var(--c-brand-50);
   color: var(--c-text);
+  min-height: 38px;
 }
-.btn:hover { background: #e5e9ee; }
+.btn:hover { background: var(--c-brand-100); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 .btn-primary {
   background: var(--c-primary);
   color: #fff;
 }
 .btn-primary:hover { background: var(--c-primary-hover); }
-.btn-blue {
-  background: var(--c-blue); color: #fff;
+.btn-secondary {
+  background: var(--c-brand-100);
+  color: var(--c-brand);
+  border-color: transparent;
 }
-.btn-blue:hover { background: var(--c-blue-hover); }
+.btn-secondary:hover { background: var(--c-brand-200); }
+.btn-outline {
+  background: #fff;
+  color: var(--c-brand);
+  border-color: var(--c-brand);
+}
+.btn-outline:hover { background: var(--c-brand-50); }
+.btn-blue {
+  background: var(--c-brand-light); color: #fff;
+}
+.btn-blue:hover { background: var(--c-brand); }
 .btn-ghost {
   background: transparent;
   color: var(--c-text-soft);
   border-color: var(--c-border);
 }
-.btn-ghost:hover { background: var(--c-bg-soft); color: var(--c-text); }
+.btn-ghost:hover { background: var(--c-brand-50); color: var(--c-brand); border-color: var(--c-brand-200); }
 .btn-danger {
   background: transparent;
   color: var(--c-down);
@@ -270,29 +369,31 @@ button { font-family: inherit; }
   padding: 6px 8px;
 }
 .btn-danger:hover { background: var(--c-down-bg); }
-.btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn-sm { padding: 6px 10px; font-size: 12px; min-height: 32px; }
 .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
 
 .input, .select, textarea.input {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-sm);
+  border: 1px solid #CFE4E1;
+  border-radius: 8px;
   background: var(--c-card);
   color: var(--c-text);
   font-size: 13px;
   font-family: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
+.input::placeholder, textarea.input::placeholder { color: #8FA8A6; }
+.input:hover, .select:hover, textarea.input:hover { border-color: var(--c-brand-light); }
 .input:focus, .select:focus, textarea.input:focus {
   outline: none;
-  border-color: var(--c-blue);
-  box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.18);
+  border-color: var(--c-brand-light);
+  box-shadow: var(--shadow-focus);
 }
 .input.input-money { text-align: right; font-variant-numeric: tabular-nums; }
 
 .field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--c-text-muted); }
+.field label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--c-text-soft); }
 
 .form-grid {
   display: grid;
@@ -304,7 +405,7 @@ button { font-family: inherit; }
 /* ============================================================
    Tables
    ============================================================ */
-.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-md); }
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -318,16 +419,20 @@ button { font-family: inherit; }
 }
 .table th {
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
-  color: var(--c-text-muted);
-  background: var(--c-bg-soft);
+  color: var(--c-text-soft);
+  background: var(--c-brand-50);
   position: sticky; top: 0;
 }
+/* Zebra-striping for scannability â€” keep both alt and hover
+   so a hovered alt row still reads as hovered. */
+.table tbody tr { background: #fff; transition: background 0.12s ease; }
+.table tbody tr:nth-child(even) { background: var(--c-bg-alt); }
 .table tbody tr:hover { background: var(--c-bg-soft); }
 .table .num { text-align: right; }
 .table .sym { font-weight: 700; letter-spacing: 0.3px; }
 .table tfoot td {
   font-weight: 700;
-  background: var(--c-bg-soft);
+  background: var(--c-brand-50);
   border-top: 2px solid var(--c-border);
 }
 
@@ -338,14 +443,15 @@ button { font-family: inherit; }
 .pill {
   display: inline-block;
   padding: 3px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px;
-  background: rgba(49, 130, 206, 0.18);
-  color: #1a56a0;
+  background: var(--c-brand-100);
+  color: var(--c-brand);
 }
 .pill.up   { background: var(--c-up-bg);   color: var(--c-up); }
 .pill.down { background: var(--c-down-bg); color: var(--c-down); }
-.pill.warn { background: var(--c-warn-bg); color: var(--c-warn); }
+.pill.warn { background: var(--c-warn-bg); color: #8a6300; }
+.pill.info { background: var(--c-info-bg); color: #0b6a82; }
 
 /* ============================================================
    Auth (sign-in landing)
@@ -354,24 +460,31 @@ button { font-family: inherit; }
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
   padding: var(--s-5);
-  background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 100%);
+  background:
+    linear-gradient(180deg,
+      #CCEDE9 0%,
+      #EAF8F6 38%,
+      #F6FCFC 72%,
+      #FFFFFF 100%);
 }
 .auth-card {
   background: var(--c-card);
   border-radius: var(--r-lg);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 18px 48px rgba(5, 80, 80, 0.14);
+  border: 1px solid var(--c-border);
   max-width: 420px; width: 100%;
   overflow: hidden;
 }
 .auth-card .head {
-  background: var(--c-header);
+  background: var(--c-brand);
   color: var(--c-text-onDark);
   padding: var(--s-5);
   text-align: center;
+  border-bottom: 3px solid var(--c-accent);
 }
 .auth-card .head h1 { color: #fff; font-size: 22px; margin-bottom: 4px; }
-.auth-card .head p  { margin: 0; color: #cbd5e1; font-size: 13px; }
-.auth-card .head i.brand-icon { color: var(--c-grad-2); font-size: 28px; margin-bottom: var(--s-2); display: block; }
+.auth-card .head p  { margin: 0; color: #DDF5F2; font-size: 13px; }
+.auth-card .head i.brand-icon { color: var(--c-accent); font-size: 28px; margin-bottom: var(--s-2); display: block; }
 .auth-body { padding: var(--s-5); display: flex; flex-direction: column; gap: var(--s-3); }
 .auth-body .divider {
   display: flex; align-items: center; gap: var(--s-2);
@@ -394,11 +507,11 @@ button { font-family: inherit; }
   font-weight: 600;
   color: var(--c-text-soft);
 }
-.auth-toggle button.active { background: var(--c-header); color: #fff; border-color: var(--c-header); }
+.auth-toggle button.active { background: var(--c-brand); color: #fff; border-color: var(--c-brand); }
 .btn-google {
-  background: #fff; color: #1a202c; border: 1px solid var(--c-border);
+  background: #fff; color: var(--c-text); border: 1px solid var(--c-border);
 }
-.btn-google:hover { background: var(--c-bg-soft); }
+.btn-google:hover { background: var(--c-brand-50); border-color: var(--c-brand-200); }
 .btn-google i { color: #ea4335; }
 
 .auth-msg { font-size: 12px; min-height: 16px; }
@@ -414,7 +527,7 @@ button { font-family: inherit; }
   z-index: 9000;
 }
 .toast {
-  background: var(--c-header); color: #fff;
+  background: var(--c-brand); color: #fff;
   padding: 10px 14px; border-radius: var(--r-md);
   font-size: 13px; font-weight: 600;
   box-shadow: var(--shadow-2);
@@ -423,14 +536,16 @@ button { font-family: inherit; }
 }
 .toast.ok   { background: var(--c-up); }
 .toast.err  { background: var(--c-down); }
-.toast.warn { background: var(--c-warn); }
+.toast.warn { background: #C99100; }
+.toast.info { background: var(--c-brand-light); }
 
 /* ============================================================
    Modal
    ============================================================ */
 .modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(3, 62, 62, 0.55);
+  backdrop-filter: blur(2px);
   display: none; align-items: center; justify-content: center;
   z-index: 800;
   padding: var(--s-4);
@@ -441,42 +556,46 @@ button { font-family: inherit; }
   border-radius: var(--r-lg);
   width: 100%; max-width: 720px;
   max-height: 90vh; overflow: auto;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 24px 60px rgba(3, 62, 62, 0.30);
+  border: 1px solid var(--c-border);
 }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--s-4) var(--s-5);
   border-bottom: 1px solid var(--c-divider);
+  background: var(--c-brand-50);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
-.modal-head h3 { margin: 0; }
+.modal-head h3 { margin: 0; color: var(--c-brand); }
 .modal-body { padding: var(--s-5); }
 .modal-close {
   background: none; border: none; cursor: pointer;
   color: var(--c-text-muted); font-size: 18px;
 }
+.modal-close:hover { color: var(--c-brand); }
 
 /* ============================================================
    TradingView widget shells
    ============================================================ */
-.tv-shell { background: #fff; border-radius: var(--r-md); padding: 4px; }
+.tv-shell { background: #fff; border-radius: var(--r-md); padding: 4px; border: 1px solid var(--c-border); }
 .tv-ticker-tape { margin-bottom: var(--s-5); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-1); background: #131722; }
 
 /* ============================================================
-   Strategy Backtester header link — make it stand out so users
-   can find the Lab from the dashboard.
+   Strategy Lab header link â€” teal gradient pill that still pops
+   without going colorful.
    ============================================================ */
 .btn-lab {
-  background: linear-gradient(135deg, rgba(142, 68, 173, 0.95), rgba(231, 76, 60, 0.95));
+  background: linear-gradient(135deg, var(--c-brand) 0%, var(--c-brand-light) 100%);
   color: #fff !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(3, 62, 62, 0.22);
 }
 .btn-lab:hover {
-  background: linear-gradient(135deg, rgba(142, 68, 173, 1), rgba(231, 76, 60, 1));
+  background: linear-gradient(135deg, var(--c-brand-dark) 0%, var(--c-brand) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 4px 14px rgba(3, 62, 62, 0.28);
 }
-.btn-lab i { color: #fde68a; }
+.btn-lab i { color: var(--c-accent); }
 
 .disclaimer {
   display: inline-flex; align-items: center; gap: 6px;
@@ -488,6 +607,11 @@ button { font-family: inherit; }
 
 /* ============================================================
    Empty / loading states
+   ------------------------------------------------------------
+   Old `.empty` is kept for backward compat. Prefer the new
+   `.empty-state-card` whenever you have a large white panel â€”
+   it adds an illustrated icon disc, headline, helper line, and
+   an optional primary CTA so users always know the next step.
    ============================================================ */
 .empty {
   text-align: center;
@@ -495,6 +619,28 @@ button { font-family: inherit; }
   color: var(--c-text-muted);
 }
 .empty i { font-size: 28px; display: block; margin-bottom: var(--s-2); color: var(--c-border); }
+
+.empty-state-card {
+  text-align: center;
+  padding: var(--s-7) var(--s-5);
+  background: linear-gradient(180deg, var(--c-brand-50) 0%, #FFFFFF 75%);
+  border: 1px dashed var(--c-brand-200);
+  border-radius: var(--r-lg);
+  color: var(--c-text-soft);
+}
+.empty-state-card .icon-disc {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--c-brand);
+  border: 1px solid var(--c-brand-200);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin: 0 auto var(--s-3);
+  box-shadow: var(--shadow-1);
+}
+.empty-state-card h3 { color: var(--c-text); margin: 0 0 4px; font-size: 16px; }
+.empty-state-card p  { margin: 0 0 var(--s-4); font-size: 13px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5; }
 
 .skeleton {
   background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
@@ -554,4 +700,112 @@ button { font-family: inherit; }
   h1 { font-size: 22px; }
   h2 { font-size: 18px; }
   .kpi .value { font-size: 20px; }
+}
+
+
+/* ============================================================
+   Strategy Lab — premium hero card (used in backtester.html)
+   ------------------------------------------------------------
+   Layout (desktop):
+     +-----------------------------------------------+
+     | Strategy Laboratory                  [Run ▶] |
+     | Research · Optimize · Compare · Improve       |
+     | Historical backtesting powered by Polygon.io  |
+     | +--------+ +--------+ +--------+ +--------+   |
+     | | Tickers| | Strat. | | Preset | | Range  |   |
+     | +--------+ +--------+ +--------+ +--------+   |
+     +-----------------------------------------------+
+   MOBILE: chips wrap; Run button drops below header,
+   chips become 2 per row on narrow screens via flex-wrap.
+   LONG-TERM NOTE: every chip is opt-in — a chip with
+   no data simply isn't rendered. The CSS handles missing
+   chips gracefully because the chip row uses flex-wrap.
+   ============================================================ */
+.hero-card {
+  background:
+    linear-gradient(135deg, var(--c-brand) 0%, var(--c-brand-light) 100%);
+  color: #fff;
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+  margin-bottom: var(--s-5);
+  box-shadow: 0 10px 28px rgba(3, 62, 62, 0.20);
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::after {
+  /* Subtle radial glow upper-right — adds depth without clutter. */
+  content: '';
+  position: absolute;
+  top: -40%; right: -10%;
+  width: 360px; height: 360px;
+  background: radial-gradient(circle, rgba(244, 183, 64, 0.18), transparent 65%);
+  pointer-events: none;
+}
+.hero-card .hero-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--s-4); flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.hero-card .hero-title { color: #fff; font-size: 26px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.2px; }
+.hero-card .hero-tags {
+  margin: 4px 0 0; color: rgba(255, 255, 255, 0.85);
+  font-size: 13px; font-weight: 500; letter-spacing: 0.3px;
+}
+.hero-card .hero-tags span + span::before { content: ' · '; opacity: 0.6; padding: 0 4px; }
+.hero-card .hero-sub { margin: var(--s-2) 0 0; color: rgba(255, 255, 255, 0.75); font-size: 12px; }
+.hero-card .hero-cta {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-brand-dark);
+  font-size: 14px; font-weight: 700;
+  border: 0; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(244, 183, 64, 0.35);
+  transition: background 0.18s ease, transform 0.05s ease, box-shadow 0.18s ease;
+  min-height: 44px;
+}
+.hero-card .hero-cta:hover { background: #FFD075; box-shadow: 0 6px 20px rgba(244, 183, 64, 0.45); }
+.hero-card .hero-cta:active { transform: translateY(1px); }
+
+.hero-card .hero-chips {
+  margin-top: var(--s-5);
+  display: flex; flex-wrap: wrap; gap: var(--s-3);
+  position: relative; z-index: 1;
+}
+.hero-chip {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  min-width: 140px;
+  backdrop-filter: blur(2px);
+}
+.hero-chip .lbl {
+  display: block;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.70);
+  margin-bottom: 4px;
+}
+.hero-chip .val {
+  display: block;
+  font-size: 14px; font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+.hero-card .hero-stats {
+  margin-top: var(--s-5);
+  display: flex; flex-wrap: wrap; gap: var(--s-4);
+  font-size: 12px; color: rgba(255, 255, 255, 0.80);
+  position: relative; z-index: 1;
+}
+.hero-card .hero-stats .stat strong { color: #fff; font-weight: 700; }
+
+@media (max-width: 600px) {
+  .hero-card { padding: var(--s-5); }
+  .hero-card .hero-title { font-size: 22px; }
+  .hero-card .hero-cta { width: 100%; justify-content: center; }
+  .hero-chip { min-width: calc(50% - var(--s-2)); }
 }

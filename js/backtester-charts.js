@@ -21,6 +21,38 @@
 
   var instances = {}; // canvasId -> Chart
 
+  // -------------------------------------------------------------------
+  // Chart palette — read from CSS custom properties so the chart colors
+  // re-skin automatically when /css/style.css tokens change.
+  // Falls back to literal hex if the page is rendered without the
+  // shared stylesheet (e.g. a unit test in jsdom).
+  // -------------------------------------------------------------------
+  function cssVar(name, fallback) {
+    if (typeof window === 'undefined' || !document || !document.documentElement) return fallback;
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+  var PALETTE = {
+    equity:    cssVar('--chart-equity',    '#20B26B'),
+    benchmark: cssVar('--chart-benchmark', '#42C7E8'),
+    drawdown:  cssVar('--chart-drawdown',  '#D9534F'),
+    monte:     cssVar('--chart-monte',     '#67D9DA'),
+    brand:     cssVar('--c-brand',         '#055050'),
+    brandLite: cssVar('--c-brand-light',   '#0D7A7A'),
+    accent:    cssVar('--c-accent',        '#F4B740'),
+    heat: [
+      cssVar('--chart-heat-1', '#CCEDE9'),
+      cssVar('--chart-heat-2', '#67D9DA'),
+      cssVar('--chart-heat-3', '#0D7A7A'),
+      cssVar('--chart-heat-4', '#055050')
+    ]
+  };
+  function withAlpha(hex, a) {
+    var n = parseInt(hex.replace('#', ''), 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
   function destroy(id) {
     if (instances[id]) { try { instances[id].destroy(); } catch (e) {} delete instances[id]; }
   }
@@ -30,7 +62,7 @@
   }
 
   function plColor(n) {
-    return n >= 0 ? 'rgba(56,161,105,0.85)' : 'rgba(229,62,62,0.85)';
+    return n >= 0 ? withAlpha(PALETTE.equity, 0.85) : withAlpha(PALETTE.drawdown, 0.85);
   }
 
   // -------------------- Equity curve --------------------
@@ -47,8 +79,8 @@
           label: 'Cumulative P/L %',
           data: data.map(function (d) { return d.y; }),
           fill: true, tension: 0.2,
-          borderColor: '#2980b9',
-          backgroundColor: 'rgba(41,128,185,0.15)'
+          borderColor: PALETTE.equity,
+          backgroundColor: withAlpha(PALETTE.equity, 0.15)
         }]
       },
       options: chartOpts({ y: { ticks: { callback: function (v) { return v.toFixed(1) + '%'; } } } })
@@ -73,8 +105,8 @@
           label: 'Drawdown %',
           data: data.map(function (d) { return d.y; }),
           fill: true, tension: 0.1,
-          borderColor: '#c0392b',
-          backgroundColor: 'rgba(229,62,62,0.18)'
+          borderColor: PALETTE.drawdown,
+          backgroundColor: withAlpha(PALETTE.drawdown, 0.18)
         }]
       },
       options: chartOpts({ y: { ticks: { callback: function (v) { return v.toFixed(1) + '%'; } } } })
@@ -139,7 +171,7 @@
         datasets: [{
           label: 'Trades',
           data: bins.counts,
-          backgroundColor: 'rgba(142,68,173,0.7)'
+          backgroundColor: withAlpha(PALETTE.brandLite, 0.7)
         }]
       },
       options: chartOpts({})
@@ -182,8 +214,8 @@
       } else {
         var intensity = Math.min(1, Math.abs(pl) / max);
         var bg = pl >= 0
-          ? 'rgba(47,158,68,' + (0.25 + intensity * 0.65).toFixed(2) + ')'
-          : 'rgba(192,57,43,' + (0.25 + intensity * 0.65).toFixed(2) + ')';
+          ? withAlpha(PALETTE.equity,   (0.25 + intensity * 0.65))
+          : withAlpha(PALETTE.drawdown, (0.25 + intensity * 0.65));
         html += '<div class="bt-cal-cell has-trade" title="' + key + ': ' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '%" ' +
                 'style="background:' + bg + '; border-color: transparent;">' +
                 '<span class="d">' + cur.getUTCDate() + '</span>' +
@@ -278,17 +310,25 @@
     });
   }
   function interpColor(t) {
-    // red -> yellow -> green
+    // Teal gradient — light teal → mid teal → deep brand teal.
+    // Replaces the old red → yellow → green rainbow so heatmaps fit
+    // the new design system. Tokens come from CSS so a theme tweak
+    // here just needs a token change in /css/style.css.
     t = Math.max(0, Math.min(1, t));
-    var r, g, b;
-    if (t < 0.5) {
-      var k = t / 0.5;
-      r = 192 + k * (243 - 192); g = 57 + k * (156 - 57);  b = 43 + k * (18 - 43);
-    } else {
-      var k2 = (t - 0.5) / 0.5;
-      r = 243 + k2 * (39 - 243);  g = 156 + k2 * (174 - 156); b = 18 + k2 * (96 - 18);
-    }
-    return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
+    var stops = PALETTE.heat; // 4 colors
+    var seg = t * (stops.length - 1);
+    var i = Math.floor(seg);
+    var k = seg - i;
+    if (i >= stops.length - 1) return stops[stops.length - 1];
+    return mixHex(stops[i], stops[i + 1], k);
+  }
+  function mixHex(a, b, k) {
+    var pa = parseInt(a.replace('#', ''), 16);
+    var pb = parseInt(b.replace('#', ''), 16);
+    var r = Math.round(((pa >> 16) & 255) + (((pb >> 16) & 255) - ((pa >> 16) & 255)) * k);
+    var g = Math.round(((pa >> 8)  & 255) + (((pb >> 8)  & 255) - ((pa >> 8)  & 255)) * k);
+    var c = Math.round((pa & 255)         + ((pb & 255)         - (pa & 255))         * k);
+    return 'rgb(' + r + ',' + g + ',' + c + ')';
   }
 
   // -------------------- Compare equity overlay (Phase H) --------------------
@@ -347,7 +387,7 @@
     var sets = paths.map(function (p, i) {
       return {
         data: p,
-        borderColor: 'rgba(41,128,185,' + (0.06 + (i % 7) * 0.02) + ')',
+        borderColor: withAlpha(PALETTE.monte, (0.10 + (i % 7) * 0.025)),
         borderWidth: 1,
         pointRadius: 0,
         tension: 0.05,
@@ -410,7 +450,11 @@
     return { labels: labels, counts: counts, centers: centers };
   }
   function paletteColor(i, alpha) {
-    var colors = ['#2980b9','#e67e22','#27ae60','#8e44ad','#c0392b','#16a085','#d35400','#2c3e50'];
+    // Compare-equity multi-ticker palette — teal-forward but with enough
+    // hue variation to keep tickers distinguishable. Limited to 8 entries;
+    // wraps around after that. To change the design, edit this array.
+    var colors = ['#055050', '#20B26B', '#42C7E8', '#0D7A7A',
+                  '#F4B740', '#D9534F', '#067A6A', '#9A6BBF'];
     var c = colors[i % colors.length];
     if (alpha != null) {
       var rgb = hexToRgb(c);

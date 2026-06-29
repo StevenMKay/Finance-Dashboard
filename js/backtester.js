@@ -41,10 +41,10 @@
   // ===================================================================
   FinanceAuth.requireAuth(function (user) {
     state.user = user;
-    $('#hdr-email').textContent = user.email || user.displayName || 'Signed in';
-    $('#btn-signout').addEventListener('click', function () {
-      FinanceAuth.signOut().then(function () { window.location.href = 'index.html'; });
-    });
+    // Header chrome (sidebar, account dropdown w/ Google photo, footer year,
+    // how-to + legal modals). Lives in js/bt-header.js so the same wiring
+    // can be lifted into other pages later (dashboard.html, future workspace).
+    if (window.BTHeader && BTHeader.init) BTHeader.init(user);
 
     // 1) Engine self-test
     var test = BTEngine.selfTest();
@@ -233,10 +233,107 @@
   }
 
   // ===================================================================
+  // HERO CARD — premium overview at top of Strategy Lab
+  // -------------------------------------------------------------------
+  // Hero responsibilities:
+  //   1. Surface current research context (tickers, strategy, preset, range)
+  //      as chips so users always know what's being tested before they run.
+  //   2. Provide a primary Run CTA that mirrors the Engine "Run" button.
+  //   3. Show quick stats after a backtest finishes.
+  //
+  // LONG-TERM NOTE: Hero element IDs live in backtester.html. If you add
+  // a new chip, edit updateHeroChips() below + add the markup once.
+  // If a chip's underlying value is missing, the chip hides itself \u2014
+  // the layout uses flex-wrap so empty positions don't leave gaps.
+  // ===================================================================
+  function bootHero() {
+    var cta = document.getElementById('bt-hero-run');
+    if (cta) cta.addEventListener('click', runEngine);
+
+    // Refresh hero chips whenever the user changes a relevant Engine field.
+    // We listen on 'input' + 'change' so number/text/select all behave.
+    var watch = ['#bt-tickers', '#bt-trend', '#bt-dip', '#bt-targets',
+                 '#bt-stops', '#bt-slippage', '#bt-interval', '#bt-period'];
+    watch.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      el.addEventListener('input',  updateHeroChips);
+      el.addEventListener('change', updateHeroChips);
+    });
+    updateHeroChips();
+  }
+
+  function updateHeroChips() {
+    // Tickers chip \u2014 condense to first 3 + count if long.
+    var tickEl  = document.getElementById('bt-tickers');
+    var tickers = tickEl ? tickEl.value.split(',').map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean) : [];
+    setChip('bt-hero-tickers', tickers.length
+      ? (tickers.length > 4
+          ? tickers.slice(0, 3).join(', ') + ' +' + (tickers.length - 3) + ' more'
+          : tickers.join(', '))
+      : '');
+
+    // Strategy name \u2014 hardcoded for now; preset/experiment systems will set
+    // this in Phase 3+. Keeping a label so the chip never reads as blank.
+    setChip('bt-hero-strategy', 'First-hour trend');
+
+    // Preset chip \u2014 placeholder until Phase 3 (strategy presets) lands.
+    setChip('bt-hero-preset', 'Default');
+
+    // Date range chip \u2014 mirrors the Engine "Lookback" select.
+    var periodEl = document.getElementById('bt-period');
+    var periodLabel = periodEl && periodEl.options[periodEl.selectedIndex]
+      ? periodEl.options[periodEl.selectedIndex].text : '';
+    setChip('bt-hero-range', periodLabel || '');
+  }
+
+  // Helper: set a chip's value and hide the entire chip if value is empty.
+  function setChip(valId, val) {
+    var el = document.getElementById(valId);
+    if (!el) return;
+    el.textContent = val || '\u2014';
+    var chip = el.closest('.hero-chip');
+    if (chip) chip.style.display = val ? '' : 'none';
+  }
+
+  // Render the quick-stats row after a backtest run.
+  function renderHeroStats() {
+    var box = document.getElementById('bt-hero-stats');
+    if (!box || !state.engineResult) return;
+    var trades = state.engineResult.trades || [];
+    var realized = trades.filter(function (t) { return t.profitPct != null && t.tradeType !== 'none'; });
+    if (!realized.length) { box.style.display = 'none'; return; }
+
+    var wins = realized.filter(function (t) { return t.profitPct > 0; }).length;
+    var winRate = (wins / realized.length) * 100;
+    var totalPL = realized.reduce(function (a, t) { return a + (t.profitPct || 0); }, 0);
+
+    // Quick max-drawdown on the equity curve of cumulative %.
+    var equity = 0, peak = 0, dd = 0;
+    realized.forEach(function (t) {
+      equity += t.profitPct;
+      if (equity > peak) peak = equity;
+      var cur = peak - equity;
+      if (cur > dd) dd = cur;
+    });
+
+    document.getElementById('bt-hero-stat-trades').textContent = realized.length.toLocaleString();
+    document.getElementById('bt-hero-stat-win').textContent    = winRate.toFixed(1) + '%';
+    document.getElementById('bt-hero-stat-pl').textContent     = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(2) + '%';
+    document.getElementById('bt-hero-stat-dd').textContent     = '-' + dd.toFixed(2) + '%';
+    box.style.display = '';
+  }
+
+  // ===================================================================
   // ENGINE TAB — Phase A/C
   // ===================================================================
   function bootEngine() {
     $('#bt-run').addEventListener('click', runEngine);
+    // Hero card: keep chips in sync when the user changes any Engine
+    // form field, and run the backtest when the hero CTA is clicked.
+    // The hero is the single source of truth users glance at, so we
+    // refresh it on every relevant input change.
+    bootHero();
     ['#bt-filter-ticker', '#bt-filter-target', '#bt-filter-stop', '#bt-filter-type'].forEach(function (s) {
       $(s).addEventListener('change', renderTrades);
     });
@@ -297,6 +394,7 @@
       populateEngineFilters();
       renderSummary();
       renderTrades();
+      renderHeroStats();
       $('#bt-export-csv').disabled = trades.length === 0;
       // Keep Investment Planner selectors in sync so the user can size up immediately.
       refreshInvestmentPlannerTab();
@@ -387,7 +485,11 @@
                    'holdingBars','holdingMinutes','entryTime','exitTime',
                    'targetHit','stopHit','exitReason',
                    'maxUnrealizedGainPct','maxUnrealizedLossPct'];
-    var rows = [headers.join(',')];
+    // PHASE 1: every CSV export starts with a disclaimer comment row so
+    // the file stays clearly labelled even after it leaves the app.
+    // Keep this header in sync with the footer + tab asides + legal modals.
+    var rows = csvDisclaimerHeader('Strategy Lab — trade detail');
+    rows.push(headers.join(','));
     state.engineResult.trades.forEach(function (t) {
       rows.push(headers.map(function (h) {
         var v = t[h];
@@ -403,6 +505,27 @@
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 500);
   }
+
+  // -------------------------------------------------------------------
+  // CSV disclaimer header — shared by every export in this app.
+  // Returns an array of comment-prefixed lines you concat onto `rows`.
+  // Reason: a single source of truth keeps the disclaimer text in sync
+  // with the footer / tab asides / legal modals. To change wording,
+  // edit DISCLAIMER below. Do NOT re-implement this inline.
+  // -------------------------------------------------------------------
+  var CSV_DISCLAIMER =
+    'Research and simulation only. Backtested results do not guarantee ' +
+    'future performance. This is not financial advice. ' +
+    'Generated by Career Solutions for Today — Strategy Lab.';
+  function csvDisclaimerHeader(kind) {
+    var when = new Date().toISOString();
+    return [
+      '# ' + CSV_DISCLAIMER,
+      '# Export: ' + (kind || 'Strategy Lab data') + '. Generated: ' + when
+    ];
+  }
+  // Make available to other modules (backtester-experiments.js exportCsv).
+  window.BTCsvHeader = csvDisclaimerHeader;
 
   // ===================================================================
   // OPTIMIZER TAB — Phase D
@@ -1511,7 +1634,10 @@
     });
 
     var labels = report.settings.timeframes.slice().map(function (t) { return t + 'm'; });
-    var palette = ['#1a2744', '#27ae60', '#e74c3c', '#8e44ad', '#f39c12', '#16a085', '#2980b9', '#d35400', '#7f8c8d', '#c0392b'];
+    // Multi-ticker palette \u2014 teal-forward (matches js/backtester-charts.js paletteColor).
+    var palette = ['#055050', '#20B26B', '#42C7E8', '#0D7A7A',
+                   '#F4B740', '#D9534F', '#067A6A', '#9A6BBF',
+                   '#67D9DA', '#C99100'];
 
     function valueFor(r) {
       if (metric === 'eodAccuracy')    return r.eodAccuracy * 100;

@@ -67,7 +67,7 @@
       }
     }
 
-    var colors = ['#1a2744', '#27ae60', '#2980b9', '#8e44ad', '#f39c12', '#e74c3c', '#16a085', '#34495e', '#d35400', '#7f8c8d', '#3498db', '#c0392b'];
+    // Allocation pie palette \u2014 teal-forward (matches Strategy Lab charts).\n    var colors = ['#055050', '#20B26B', '#42C7E8', '#0D7A7A', '#F4B740', '#D9534F',\n                  '#067A6A', '#9A6BBF', '#67D9DA', '#C99100', '#3FB8AF', '#5C7A7A'];
     var ctx = FU.$('#allocChart').getContext('2d');
     var emptyEl = FU.$('#alloc-empty');
     var chartCanvas = FU.$('#allocChart');

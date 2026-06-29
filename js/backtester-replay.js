@@ -28,15 +28,15 @@
     var chart = LightweightCharts.createChart(el, {
       width: el.clientWidth,
       height: 360,
-      layout: { background: { color: '#ffffff' }, textColor: '#1a202c' },
-      grid: { vertLines: { color: '#eef2f7' }, horzLines: { color: '#eef2f7' } },
+      layout: { background: { color: '#ffffff' }, textColor: '#0F2A2A' },
+      grid: { vertLines: { color: '#E6F1EF' }, horzLines: { color: '#E6F1EF' } },
       timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: '#d0d5dd' }
+      rightPriceScale: { borderColor: '#D9ECE9' }
     });
     var series = chart.addCandlestickSeries({
-      upColor: '#2f9e44', downColor: '#c0392b',
-      borderUpColor: '#2f9e44', borderDownColor: '#c0392b',
-      wickUpColor: '#2f9e44', wickDownColor: '#c0392b'
+      upColor: '#20B26B', downColor: '#D9534F',
+      borderUpColor: '#20B26B', borderDownColor: '#D9534F',
+      wickUpColor: '#20B26B', wickDownColor: '#D9534F'
     });
 
     // lightweight-charts wants UTC seconds.
@@ -68,7 +68,7 @@
           markers.push({
             time: Math.floor(fhEnd / 1000),
             position: 'aboveBar',
-            color: '#dd6b20',
+            color: '#F4B740',
             shape: 'circle',
             text: 'Trend ' + (trade.trend || '-')
           });
@@ -78,14 +78,14 @@
           (trade.entryTime / 1000) <= fullData[upTo - 1].time) {
         markers.push({
           time: Math.floor(trade.entryTime / 1000),
-          position: 'belowBar', color: '#2980b9', shape: 'arrowUp',
+          position: 'belowBar', color: '#055050', shape: 'arrowUp',
           text: 'Buy ' + fmtMoney(trade.buyPrice)
         });
       }
       if (trade && trade.tradeType !== 'none' && trade.exitTime &&
           (trade.exitTime / 1000) <= fullData[upTo - 1].time) {
-        var col = (trade.exitReason === 'stop') ? '#c0392b'
-                : (trade.exitReason === 'target') ? '#2f9e44' : '#718096';
+        var col = (trade.exitReason === 'stop') ? '#D9534F'
+                : (trade.exitReason === 'target') ? '#20B26B' : '#5C7A7A';
         markers.push({
           time: Math.floor(trade.exitTime / 1000),
           position: 'aboveBar', color: col, shape: 'arrowDown',
