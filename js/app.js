@@ -53,6 +53,7 @@
     FinanceStore.subscribeWatchlist(function (items) {
       watchlist = items;
       FinanceWatchlist.setItems(items);
+      FinanceOverview.setWatchlist(items);
       refreshSymbolUnion();
     });
     FinanceStore.subscribeSalary(function (plan) {

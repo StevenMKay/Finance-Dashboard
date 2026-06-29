@@ -2,7 +2,7 @@
  * Re-renders on accounts/holdings/quotes changes. */
 (function () {
   var allocChart = null;
-  var state = { accounts: [], holdings: [], quotes: {} };
+  var state = { accounts: [], holdings: [], quotes: {}, watchlist: [] };
   var marketMounted = false;
 
   function recompute() {
@@ -33,7 +33,9 @@
     dayEl.textContent = FU.delta(dayPL);
     FU.$('#kpi-day-pct').textContent = FU.pctRaw(dayPct * 100);
     dayKpi.classList.remove('up', 'down', 'warn');
-    dayKpi.classList.add(dayPL > 0 ? 'up' : (dayPL < 0 ? 'down' : ''));
+    // classList.add('') throws DOMException — only add when there's a class to add.
+    if (dayPL > 0)      dayKpi.classList.add('up');
+    else if (dayPL < 0) dayKpi.classList.add('down');
 
     var cashPct = net > 0 ? (cashTotal / net) : 0;
     FU.$('#kpi-cash').textContent = (cashPct * 100).toFixed(1) + '%';
@@ -150,13 +152,33 @@
     try { localStorage.setItem(MO_LS, JSON.stringify(list)); } catch (e) {}
   }
   function customTabs() {
+    var tabs = [];
     var list = loadCustom();
-    if (!list.length) return [];
-    return [{
-      title: 'Custom',
-      symbols: list.map(function (s) { return { s: s }; }),
-      originalTitle: 'Custom'
-    }];
+    if (list.length) {
+      tabs.push({
+        title: 'Custom',
+        symbols: list.map(function (s) { return { s: s }; }),
+        originalTitle: 'Custom'
+      });
+    }
+    // Watchlist tab — user-added items from the Watchlist tab show up
+    // here too so the Market Overview is a single source of truth.
+    var watchSyms = (state.watchlist || [])
+      .map(function (w) { return w && w.symbol ? String(w.symbol).toUpperCase() : null; })
+      .filter(Boolean);
+    if (watchSyms.length) {
+      tabs.push({
+        title: 'Watchlist',
+        // TradingView resolves bare symbols, but prefixing keeps the
+        // logo + sparkline accurate. Custom-tab entries that already
+        // have a prefix are left untouched.
+        symbols: watchSyms.map(function (s) {
+          return { s: s.indexOf(':') === -1 ? 'NASDAQ:' + s : s };
+        }),
+        originalTitle: 'Watchlist'
+      });
+    }
+    return tabs;
   }
   function normalizeSymbol(input) {
     var s = String(input || '').trim().toUpperCase();
@@ -251,6 +273,14 @@
     init: init,
     setAccounts:  function (a) { state.accounts  = a || []; recompute(); },
     setHoldings:  function (h) { state.holdings  = h || []; recompute(); },
-    setQuotes:    function (q) { state.quotes    = q || {}; recompute(); }
+    setQuotes:    function (q) { state.quotes    = q || {}; recompute(); },
+    setWatchlist: function (w) {
+      // Cache + remount the Market Overview widget so its "Watchlist" tab
+      // reflects what the user has saved. We only remount when the widget
+      // was already mounted; otherwise the next ensureMarketWidget() call
+      // will pick up the new list naturally.
+      state.watchlist = w || [];
+      if (marketMounted) remountMarket();
+    }
   };
 })();
