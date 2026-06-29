@@ -136,8 +136,103 @@
 
   function ensureMarketWidget() {
     if (marketMounted) return;
-    FinanceTV.marketOverview('tv-market-overview');
+    FinanceTV.marketOverview('tv-market-overview', { extraTabs: customTabs() });
     marketMounted = true;
+  }
+
+  // ---- Custom symbols (user-added entries in the Market overview) ----
+  var MO_LS = 'fd.marketOverview.custom';   // array of TV symbol strings
+  function loadCustom() {
+    try { var raw = localStorage.getItem(MO_LS); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+  }
+  function saveCustom(list) {
+    try { localStorage.setItem(MO_LS, JSON.stringify(list)); } catch (e) {}
+  }
+  function customTabs() {
+    var list = loadCustom();
+    if (!list.length) return [];
+    return [{
+      title: 'Custom',
+      symbols: list.map(function (s) { return { s: s }; }),
+      originalTitle: 'Custom'
+    }];
+  }
+  function normalizeSymbol(input) {
+    var s = String(input || '').trim().toUpperCase();
+    if (!s) return '';
+    // If the user typed a bare ticker, assume NASDAQ. TradingView accepts
+    // EXCHANGE:SYMBOL — anything with a colon we leave alone.
+    if (s.indexOf(':') === -1) return 'NASDAQ:' + s.replace(/[^A-Z0-9.\-]/g, '');
+    return s.replace(/[^A-Z0-9.:\-]/g, '');
+  }
+  function renderCustomChips() {
+    var host = FU.$('#mo-custom-chips');
+    if (!host) return;
+    var list = loadCustom();
+    if (!list.length) { host.innerHTML = ''; return; }
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+      });
+    }
+    host.innerHTML = list.map(function (sym, i) {
+      var safe = esc(sym);
+      return '<span class="bt-chip" style="display:inline-flex; align-items:center; gap:6px; background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; padding:3px 8px; border-radius:999px; font-size:12px;">' +
+        safe +
+        '<button type="button" data-mo-remove="' + i + '" aria-label="Remove ' + safe + '" style="background:none; border:0; color:inherit; cursor:pointer; font-size:14px; padding:0; line-height:1;">&times;</button>' +
+      '</span>';
+    }).join('');
+    host.querySelectorAll('[data-mo-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-mo-remove'), 10);
+        var arr = loadCustom();
+        arr.splice(idx, 1);
+        saveCustom(arr);
+        renderCustomChips();
+        remountMarket();
+      });
+    });
+  }
+  function remountMarket() {
+    // TradingView widgets cannot be re-configured in place — clear and remount.
+    var el = FU.$('#tv-market-overview');
+    if (!el) return;
+    el.innerHTML = '';
+    marketMounted = false;
+    FinanceTV.marketOverview('tv-market-overview', { extraTabs: customTabs() });
+    marketMounted = true;
+  }
+  function initCustomControls() {
+    var input = FU.$('#mo-custom-input');
+    var addBtn = FU.$('#mo-custom-add');
+    var clearBtn = FU.$('#mo-custom-clear');
+    if (!input || !addBtn) return;
+
+    function addNow() {
+      var sym = normalizeSymbol(input.value);
+      if (!sym) return;
+      var arr = loadCustom();
+      if (arr.indexOf(sym) === -1) arr.push(sym);
+      saveCustom(arr);
+      input.value = '';
+      renderCustomChips();
+      remountMarket();
+    }
+    addBtn.addEventListener('click', addNow);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addNow(); }
+    });
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (!loadCustom().length) return;
+        if (!confirm('Clear all custom market-overview symbols?')) return;
+        saveCustom([]);
+        renderCustomChips();
+        remountMarket();
+      });
+    }
+    renderCustomChips();
   }
 
   function init() {
@@ -149,6 +244,7 @@
       if (e.detail.name === 'overview') ensureMarketWidget();
     });
     if (FU.$('#tab-overview').classList.contains('active')) ensureMarketWidget();
+    initCustomControls();
   }
 
   window.FinanceOverview = {

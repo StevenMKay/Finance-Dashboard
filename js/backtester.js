@@ -56,7 +56,7 @@
       showError('Engine self-test failed — disabling Run buttons. ' +
         test.results.filter(function (r) { return !r.ok; })
                     .map(function (r) { return r.name + ': ' + r.detail; }).join(' | '));
-      $$('#bt-run, #bt-opt-run, #bt-cmp-run, #bt-mc-run, #bt-ai-rec-run, #bt-ai-sb-run, #bt-ip-run, #bt-sq-run')
+      $$('#bt-run, #bt-opt-run, #bt-cmp-run, #bt-mc-run, #bt-ai-rec-run, #bt-ai-sb-run, #bt-ip-run, #bt-sq-run, #bt-tf-run')
         .forEach(function (b) { b.disabled = true; });
       return;
     }
@@ -73,6 +73,7 @@
     bootMonteCarlo();
     bootInvestmentPlanner();
     bootSignalQuality();
+    bootExperiments();
     bootAI();
     if (!state.workerSupported) {
       $('#bt-opt-fallback').style.display = '';
@@ -97,6 +98,7 @@
         if (name === 'replay')      refreshReplayTab();
         if (name === 'planner')     refreshInvestmentPlannerTab();
         if (name === 'signal')      refreshSignalQualityTab();
+        if (name === 'experiments') refreshExperimentsTab();
         if (name === 'montecarlo')  /* render on demand */;
       });
     });
@@ -1316,6 +1318,260 @@
       tdNum(bestTargetCell) +
       tdNum(bestExpCell);
     return tr;
+  }
+
+  // ===================================================================
+  // EXPERIMENTS TAB — Timeframe Accuracy Report (Phase M)
+  // -------------------------------------------------------------------
+  // Designed to host multiple experiments over time. The Timeframe
+  // Accuracy Report sweeps every window in `bt-tf-windows` across all
+  // tickers already loaded by the Engine tab.
+  // ===================================================================
+  var TF_LS_IDEAS = 'btLab.experimentIdeas';
+  var tfState = { lastReport: null, chart: null };
+
+  function bootExperiments() {
+    $('#bt-tf-run').addEventListener('click', runTimeframeAccuracy);
+
+    // Re-render table/chart on sort or metric change without re-running math.
+    $('#bt-tf-sort').addEventListener('change', function () {
+      if (tfState.lastReport) renderTimeframeTable(tfState.lastReport);
+    });
+    $('#bt-tf-chart-metric').addEventListener('change', function () {
+      if (tfState.lastReport) renderTimeframeChart(tfState.lastReport);
+    });
+
+    // Persist the user's experiment ideas locally so the textarea sticks.
+    var ideas = $('#bt-exp-ideas');
+    try { ideas.value = localStorage.getItem(TF_LS_IDEAS) || ''; } catch (e) {}
+    var saveTimer = null;
+    var status = $('#bt-exp-ideas-status');
+    ideas.addEventListener('input', function () {
+      if (saveTimer) clearTimeout(saveTimer);
+      status.textContent = 'Saving…';
+      saveTimer = setTimeout(function () {
+        try {
+          localStorage.setItem(TF_LS_IDEAS, ideas.value);
+          status.textContent = 'Saved.';
+        } catch (e) {
+          status.textContent = 'Save failed (localStorage blocked).';
+        }
+      }, 250);
+    });
+  }
+
+  function refreshExperimentsTab() {
+    // Default the timeframe input to the user's first-hour window if blank.
+    var el = $('#bt-tf-windows');
+    if (!el.value.trim()) el.value = '15, 30, 45, 60, 90, 120';
+  }
+
+  function runTimeframeAccuracy() {
+    showError('');
+    if (!state.engineResult || !state.engineResult.candlesByTicker) {
+      showError('Run the Engine tab first — the timeframe report scores the candles from your latest backtest.');
+      return;
+    }
+    var timeframes = parseNumberList($('#bt-tf-windows').value)
+      .map(function (n) { return Math.max(5, Math.round(n)); })
+      .filter(function (n) { return n < 390; });
+    if (!timeframes.length) timeframes = [15, 30, 45, 60, 90, 120];
+
+    var opts = {
+      timeframes:  timeframes,
+      dipPct:      Math.max(0.1, parseFloat($('#bt-tf-dip').value) || 3),
+      hitTargets:  parseNumberList($('#bt-tf-hits').value),
+      targetSweep: parseNumberList($('#bt-tf-sweep').value)
+    };
+    if (!opts.hitTargets.length)  opts.hitTargets  = [0.35, 0.5, 1];
+    if (!opts.targetSweep.length) opts.targetSweep = [0.35, 0.5, 0.75, 1, 1.5, 2, 3];
+
+    var report = BTTimeframeAccuracy.analyze(state.engineResult.candlesByTicker, opts);
+    if (!report.rows.length) {
+      showError('Timeframe report produced no rows — your loaded candles may be too short for these windows.');
+      return;
+    }
+    tfState.lastReport = report;
+    renderTimeframeBest(report);
+    renderTimeframeTable(report);
+    renderTimeframeChart(report);
+  }
+
+  function renderTimeframeBest(report) {
+    var grid = $('#bt-tf-best-grid');
+    var bestKeys = Object.keys(report.bestByTicker).sort();
+    if (!bestKeys.length) {
+      $('#bt-tf-best-card').style.display = 'none';
+      return;
+    }
+    $('#bt-tf-best-card').style.display = '';
+    grid.innerHTML = bestKeys.map(function (tk) {
+      var r = report.bestByTicker[tk];
+      var sub =
+        'Win ' + r.bestWinRate.toFixed(0) + '% · ' +
+        'Acc ' + (r.eodAccuracy * 100).toFixed(0) + '% · ' +
+        'Tot ' + (r.totalReturn >= 0 ? '+' : '') + r.totalReturn.toFixed(1) + '%';
+      var exp = r.bestExpectancy;
+      var expCls = exp > 0 ? 'bt-pl-pos' : (exp < 0 ? 'bt-pl-neg' : 'bt-pl-flat');
+      return '<div class="bt-kpi">' +
+        '<div class="label">' + escapeHtml(tk) + ' · best timeframe</div>' +
+        '<div class="value">' + r.timeframe + 'm @ ' + r.bestTarget + '%</div>' +
+        '<div class="muted" style="font-size:11px; margin-top:4px;">E <span class="' + expCls + '">' +
+        (exp > 0 ? '+' : '') + exp.toFixed(2) + '%</span> · ' + sub + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderTimeframeTable(report) {
+    $('#bt-tf-empty').style.display = 'none';
+    $('#bt-tf-results-card').style.display = '';
+    var s = report.settings;
+    $('#bt-tf-settings-line').textContent =
+      'Timeframes ' + s.timeframes.join('/') + ' min · ' +
+      'Dip threshold ' + s.dipPct + '% · ' +
+      'Hit targets ' + s.hitTargets.join('/') + '% · ' +
+      'Sweep ' + s.targetSweep.join('/') + '%';
+
+    var rows = report.rows.slice();
+    var sortMode = $('#bt-tf-sort').value;
+    if (sortMode === 'expectancy') {
+      rows.sort(function (a, b) { return b.bestExpectancy - a.bestExpectancy; });
+    } else if (sortMode === 'totalReturn') {
+      rows.sort(function (a, b) { return b.totalReturn - a.totalReturn; });
+    } else if (sortMode === 'eodAccuracy') {
+      rows.sort(function (a, b) { return b.eodAccuracy - a.eodAccuracy; });
+    } else {
+      rows.sort(function (a, b) {
+        if (a.ticker !== b.ticker) return a.ticker < b.ticker ? -1 : 1;
+        return a.timeframe - b.timeframe;
+      });
+    }
+
+    // Find best (ticker, timeframe) so we can highlight the winning row.
+    var bestExpByTicker = {};
+    rows.forEach(function (r) {
+      var b = bestExpByTicker[r.ticker];
+      if (!b || r.bestExpectancy > b) bestExpByTicker[r.ticker] = r.bestExpectancy;
+    });
+
+    var body = $('#bt-tf-body');
+    body.innerHTML = '';
+    rows.forEach(function (r) {
+      var isBest = r.bestExpectancy === bestExpByTicker[r.ticker];
+      body.appendChild(buildTimeframeRow(r, isBest));
+    });
+  }
+
+  function buildTimeframeRow(r, isBest) {
+    var tr = document.createElement('tr');
+    if (isBest) {
+      tr.style.background = '#f0fdf4'; // soft green to flag winning row
+      tr.style.fontWeight = '600';
+    }
+    function pctCell(n) {
+      if (n == null) return tdNum('—');
+      return tdNum((n * 100).toFixed(0) + '%');
+    }
+    function plCellLocal(n) { return plCell(isFinite(n) ? n : 0); }
+    var falseSigCell = r.signalsTaken
+      ? r.falseSignals + ' / ' + r.signalsTaken +
+        ' <span class="muted" style="font-size:11px;">(' + (r.falseSignalRate * 100).toFixed(0) + '%)</span>'
+      : '—';
+    var bestTargetCell = r.bestTarget != null
+      ? r.bestTarget + '% <span class="muted" style="font-size:11px;">(' + r.bestTradesTaken + 'tr · WR ' + r.bestWinRate.toFixed(0) + '%)</span>'
+      : '—';
+    tr.innerHTML =
+      td(r.ticker, 'sym') +
+      tdNum(r.timeframe + 'm') +
+      tdNum(r.totalDays) +
+      pctCell(r.eodAccuracy) +
+      pctCell(r.hits035) +
+      pctCell(r.hits05) +
+      pctCell(r.hits1) +
+      tdNum(plCellLocal(r.avgReturn)) +
+      tdNum(plCellLocal(r.bestExpectancy)) +
+      tdNum(bestTargetCell) +
+      tdNum(falseSigCell);
+    return tr;
+  }
+
+  function renderTimeframeChart(report) {
+    $('#bt-tf-chart-card').style.display = '';
+    var metric = $('#bt-tf-chart-metric').value;
+
+    // Group rows by ticker so each line traces accuracy across timeframes.
+    var byTicker = {};
+    report.rows.forEach(function (r) {
+      (byTicker[r.ticker] = byTicker[r.ticker] || []).push(r);
+    });
+    Object.keys(byTicker).forEach(function (tk) {
+      byTicker[tk].sort(function (a, b) { return a.timeframe - b.timeframe; });
+    });
+
+    var labels = report.settings.timeframes.slice().map(function (t) { return t + 'm'; });
+    var palette = ['#1a2744', '#27ae60', '#e74c3c', '#8e44ad', '#f39c12', '#16a085', '#2980b9', '#d35400', '#7f8c8d', '#c0392b'];
+
+    function valueFor(r) {
+      if (metric === 'eodAccuracy')    return r.eodAccuracy * 100;
+      if (metric === 'bestExpectancy') return r.bestExpectancy;
+      if (metric === 'totalReturn')    return r.totalReturn;
+      if (metric === 'avgReturn')      return r.avgReturn;
+      if (metric === 'hits1')          return r.hits1 != null ? r.hits1 * 100 : null;
+      return r.eodAccuracy * 100;
+    }
+    function metricLabel() {
+      return ({
+        eodAccuracy:    'EOD accuracy (%)',
+        bestExpectancy: 'Expectancy at best target (%)',
+        totalReturn:    'Sum of post-window returns (%)',
+        avgReturn:      'Avg post-window return (%)',
+        hits1:          '+1% hit rate (%)'
+      })[metric] || 'Value';
+    }
+
+    var datasets = Object.keys(byTicker).sort().map(function (tk, idx) {
+      var color = palette[idx % palette.length];
+      var data = report.settings.timeframes.map(function (tf) {
+        var row = byTicker[tk].find(function (x) { return x.timeframe === tf; });
+        return row ? valueFor(row) : null;
+      });
+      return {
+        label: tk,
+        data: data,
+        borderColor: color,
+        backgroundColor: color + '33',
+        tension: 0.25,
+        spanGaps: true,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      };
+    });
+
+    if (tfState.chart) { tfState.chart.destroy(); tfState.chart = null; }
+    var ctx = $('#bt-tf-chart').getContext('2d');
+    tfState.chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                var v = ctx.parsed.y;
+                return ctx.dataset.label + ': ' + (v == null ? '—' : v.toFixed(2));
+              }
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'First-window timeframe' } },
+          y: { title: { display: true, text: metricLabel() }, beginAtZero: metric === 'eodAccuracy' || metric === 'hits1' }
+        }
+      }
+    });
   }
 
   // ===================================================================

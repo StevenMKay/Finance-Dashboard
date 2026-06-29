@@ -318,6 +318,7 @@
       <button data-tab="montecarlo" role="tab"><i class="fa-solid fa-dice"></i><span class="lbl">Monte Carlo</span></button>
       <button data-tab="planner"    role="tab"><i class="fa-solid fa-sack-dollar"></i><span class="lbl">Investment Planner</span></button>
       <button data-tab="signal"     role="tab"><i class="fa-solid fa-traffic-light"></i><span class="lbl">Signal Quality</span></button>
+      <button data-tab="experiments" role="tab"><i class="fa-solid fa-flask"></i><span class="lbl">Experiments</span></button>
       <button data-tab="ai"         role="tab"><i class="fa-solid fa-brain"></i><span class="lbl">AI Lab</span></button>
     </nav>
 
@@ -1008,6 +1009,139 @@
     </section>
 
     <!-- ===================================================================
+         EXPERIMENTS TAB
+         A growing collection of user-requested analytical experiments.
+         First experiment: Timeframe Accuracy Report.
+         =================================================================== -->
+    <section id="tab-experiments" class="tab-panel" role="tabpanel">
+
+      <!-- ============ Experiment 1: Timeframe Accuracy Report ============ -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2><i class="fa-solid fa-stopwatch-20" style="color: var(--c-grad-2); margin-right: 6px;"></i>Timeframe Accuracy Report</h2>
+            <div class="card-sub">
+              Sweeps the first-window timeframe across <strong>15, 30, 45, 60, 90, 120</strong> minutes for every ticker loaded by the Engine tab, then ranks each (ticker, timeframe) pair by <strong>expectancy</strong> — not just win rate. Ideal for finding the sharpest window per symbol.
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="bt-tf-windows">Timeframes (minutes, comma)</label>
+            <input id="bt-tf-windows" class="input" type="text" value="15, 30, 45, 60, 90, 120" />
+          </div>
+          <div class="field">
+            <label for="bt-tf-dip">Red-trend dip threshold (%)</label>
+            <input id="bt-tf-dip" class="input" type="number" min="0.5" max="10" step="0.1" value="3" />
+          </div>
+          <div class="field">
+            <label for="bt-tf-hits">Hit-rate targets (%, comma)</label>
+            <input id="bt-tf-hits" class="input" type="text" value="0.35, 0.5, 1" />
+          </div>
+          <div class="field">
+            <label for="bt-tf-sweep">Expectancy sweep targets (%, comma)</label>
+            <input id="bt-tf-sweep" class="input" type="text" value="0.35, 0.5, 0.75, 1, 1.5, 2, 3" />
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <button id="bt-tf-run" class="btn btn-primary"><i class="fa-solid fa-stopwatch"></i> Run Timeframe Accuracy Report</button>
+            <span class="muted" style="font-size:11px; margin-left:8px;">Run the Engine tab first so the experiment has candles to sweep.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty" id="bt-tf-empty">
+        <i class="fa-regular fa-clock"></i>
+        Run a backtest on the Engine tab, then click <strong>Run Timeframe Accuracy Report</strong>.
+      </div>
+
+      <!-- Best-per-ticker highlights -->
+      <div class="card" id="bt-tf-best-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>Best timeframe per ticker</h2>
+            <div class="card-sub">Ranked by expectancy first, then by total return. Use these as your starting points when you re-run the Engine tab.</div>
+          </div>
+        </div>
+        <div class="bt-kpi-grid" id="bt-tf-best-grid"></div>
+      </div>
+
+      <!-- Full results table -->
+      <div class="card" id="bt-tf-results-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>All (ticker, timeframe) results</h2>
+            <div class="card-sub" id="bt-tf-settings-line"></div>
+          </div>
+          <div class="muted" style="font-size:12px;">Sort: <select id="bt-tf-sort" class="select" style="width:auto;">
+              <option value="ticker_tf">Ticker, then timeframe</option>
+              <option value="expectancy">Best expectancy ↓</option>
+              <option value="totalReturn">Total return ↓</option>
+              <option value="eodAccuracy">EOD accuracy ↓</option>
+            </select></div>
+        </div>
+        <div style="overflow:auto; max-height: 60vh;">
+          <table class="table" id="bt-tf-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th class="num">Timeframe</th>
+                <th class="num" title="Number of trading days tested">Days</th>
+                <th class="num" title="Days where window direction predicted the EOD direction">EOD Accuracy</th>
+                <th class="num" title="Signals that hit ≥ +0.35% (green window: from window close; red dip: from dip price)">+0.35 Hit %</th>
+                <th class="num" title="Signals that hit ≥ +0.5%">+0.5 Hit %</th>
+                <th class="num" title="Signals that hit ≥ +1%">+1 Hit %</th>
+                <th class="num" title="Average return from window close → EOD">Avg Return</th>
+                <th class="num" title="Expectancy at the best target across the sweep">Expectancy</th>
+                <th class="num" title="Target with the highest expectancy">Best Target</th>
+                <th class="num" title="Acted signals that failed the smallest hit target">False sig</th>
+              </tr>
+            </thead>
+            <tbody id="bt-tf-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Accuracy comparison chart -->
+      <div class="card" id="bt-tf-chart-card" style="display:none;">
+        <div class="card-head">
+          <div>
+            <h2>EOD accuracy by timeframe</h2>
+            <div class="card-sub">Each ticker = one line. Higher = the window's direction predicted the EOD direction more reliably.</div>
+          </div>
+          <div class="muted" style="font-size:12px;">Metric: <select id="bt-tf-chart-metric" class="select" style="width:auto;">
+              <option value="eodAccuracy">EOD accuracy</option>
+              <option value="bestExpectancy">Expectancy at best target</option>
+              <option value="totalReturn">Total post-window return</option>
+              <option value="avgReturn">Average post-window return</option>
+              <option value="hits1">+1% hit rate</option>
+            </select></div>
+        </div>
+        <canvas id="bt-tf-chart" height="280"></canvas>
+      </div>
+
+      <!-- Future experiments placeholder — keeps the tab extensible -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2><i class="fa-regular fa-lightbulb" style="color:#f59e0b; margin-right:6px;"></i>Got an experiment idea?</h2>
+            <div class="card-sub">
+              Drop a sentence here and it's stored locally on this device. Future analytical experiments (volatility-window, gap-fill probability, etc.) will land in this tab.
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="bt-exp-ideas">My experiment ideas (saved on this device)</label>
+            <textarea id="bt-exp-ideas" class="input" rows="3" placeholder="e.g. Test how often AMD's first 5-min range is broken to the upside vs downside…" style="resize: vertical; min-height: 72px; font-family: inherit;"></textarea>
+            <div class="muted" style="font-size:11px; margin-top:4px;">
+              <span id="bt-exp-ideas-status">Saved automatically.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
          AI LAB TAB
          =================================================================== -->
     <section id="tab-ai" class="tab-panel" role="tabpanel">
@@ -1066,6 +1200,7 @@
   <script src="js/backtester-replay.js"></script>
   <script src="js/backtester-investment-planner.js"></script>
   <script src="js/backtester-signal-quality.js"></script>
+  <script src="js/backtester-timeframe.js"></script>
   <script src="js/backtester-ai.js"></script>
   <script src="js/backtester.js"></script>
 </body>

@@ -67,7 +67,15 @@
       </div>
 
       <div class="card">
-        <div class="card-head"><h2>Market overview</h2></div>
+        <div class="card-head" style="flex-wrap: wrap; gap: 10px;">
+          <h2>Market overview</h2>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input id="mo-custom-input" class="input" type="text" placeholder="Add symbol (e.g. NASDAQ:AMD)" style="width: 240px;" />
+            <button id="mo-custom-add" class="btn btn-sm" type="button" title="Add to your Custom tab"><i class="fa-solid fa-plus"></i> Add</button>
+            <button id="mo-custom-clear" class="btn btn-sm btn-ghost" type="button" title="Clear your Custom tab"><i class="fa-solid fa-eraser"></i></button>
+          </div>
+        </div>
+        <div id="mo-custom-chips" class="results-list" style="display:flex; flex-wrap:wrap; gap:6px; padding: 0 4px 8px; min-height: 4px;"></div>
         <div class="tv-shell" id="tv-market-overview"></div>
       </div>
     </section>

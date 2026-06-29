@@ -70,7 +70,25 @@
     });
   }
 
-  function marketOverview(containerId) {
+  function marketOverview(containerId, opts) {
+    opts = opts || {};
+    // Default tabs — Indices + Tech. Caller can pass extraTabs (array of
+    // { title, symbols: [{s, d?}, ...] }) to append user-customized tabs.
+    var tabs = [
+      { title: 'Indices', symbols: [
+        { s: 'FOREXCOM:SPXUSD', d: 'S&P 500' },
+        { s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100' },
+        { s: 'FOREXCOM:DJI',    d: 'Dow 30' },
+        { s: 'INDEX:VIX',       d: 'Volatility' }
+      ], originalTitle: 'Indices' },
+      { title: 'Tech', symbols: [
+        { s: 'NASDAQ:AAPL' }, { s: 'NASDAQ:MSFT' }, { s: 'NASDAQ:GOOGL' },
+        { s: 'NASDAQ:AMZN' }, { s: 'NASDAQ:META' }, { s: 'NASDAQ:NVDA' }
+      ], originalTitle: 'Tech' }
+    ];
+    if (Array.isArray(opts.extraTabs)) {
+      opts.extraTabs.forEach(function (t) { if (t && t.symbols && t.symbols.length) tabs.push(t); });
+    }
     setWidget(containerId, 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js', {
       colorTheme: 'light',
       dateRange: '12M',
@@ -88,18 +106,7 @@
       scaleFontColor: '#4a5568',
       belowLineFillColorGrowing: 'rgba(39, 174, 96, 0.12)',
       belowLineFillColorFalling: 'rgba(231, 76, 60, 0.12)',
-      tabs: [
-        { title: 'Indices', symbols: [
-          { s: 'FOREXCOM:SPXUSD', d: 'S&P 500' },
-          { s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100' },
-          { s: 'FOREXCOM:DJI',    d: 'Dow 30' },
-          { s: 'INDEX:VIX',       d: 'Volatility' }
-        ], originalTitle: 'Indices' },
-        { title: 'Tech', symbols: [
-          { s: 'NASDAQ:AAPL' }, { s: 'NASDAQ:MSFT' }, { s: 'NASDAQ:GOOGL' },
-          { s: 'NASDAQ:AMZN' }, { s: 'NASDAQ:META' }, { s: 'NASDAQ:NVDA' }
-        ], originalTitle: 'Tech' }
-      ]
+      tabs: tabs
     });
   }
 
