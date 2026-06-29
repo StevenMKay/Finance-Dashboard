@@ -29,6 +29,12 @@
   --c-accent:        #F4B740;
   --c-accent-soft:   #F0A830;
 
+  /* Light-blue accent reserved for the header brand icon + menu trigger.
+     Cool sky tone reads cleanly on the dark teal header background and
+     differentiates navigation chrome from the warm gold accent. */
+  --c-icon-blue:     #7DD3FC;
+  --c-icon-blue-soft:#BAE6FD;
+
   /* Legacy gradient tokens â€” re-mapped to teal so any older
      component that still references them inherits the new look. */
   --c-grad-1:        var(--c-brand);
@@ -158,7 +164,7 @@ button { font-family: inherit; }
   display: flex; align-items: center; gap: var(--s-3);
   font-size: 16px; font-weight: 700; letter-spacing: 0.2px;
 }
-.app-header .brand i { color: var(--c-accent); }
+.app-header .brand i { color: var(--c-icon-blue); }
 .app-header .user {
   display: flex; align-items: center; gap: var(--s-3);
   font-size: 13px; color: #DDF5F2;
