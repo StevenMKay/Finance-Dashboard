@@ -199,19 +199,27 @@
     {
       id: 'gapUpContinuation',
       name: 'Gap-up continuation',
-      summary: 'After a gap-up open, buy if price is still above the open at the end of a confirmation window.',
+      summary: 'After a gap-up open, buy if price is still above the open at the end of a confirmation window. Both the gap-up threshold and the profit target are editable so you can study how often a chosen gap size leads to a chosen intraday continuation.',
       controls: [
-        { id: 'gapPct', label: 'Min gap-up', type: 'choice', suffix: '%',
-          options: [1, 2, 3, 4, 5], default: 2 },
+        // EDITABLE NUMBER INPUT \u2014 user can type any value (e.g. 0.75, 1.25, 3.5).
+        // step 0.25 keeps spinner clicks aligned with the user's most common
+        // adjustments; min 0 prevents nonsense negative gaps. Default 1 matches
+        // the requested spec (\"Gap-up threshold %, default 1\").
+        { id: 'gapPct', label: 'Min gap-up', type: 'number', suffix: '%',
+          min: 0, step: 0.25, default: 1 },
         { id: 'confirmMin', label: 'Confirmation window', type: 'choice',
           options: [15, 30, 60], suffix: 'min', default: 30 },
-        targetControl(0.5, [0.35, 0.5, 1]),
-        stopControl(1, [0.5, 1, 2])
+        // EDITABLE NUMBER INPUT for the additional intraday target so users can
+        // sweep beyond the preset list. Default 1 matches the spec
+        // (\"Additional intraday target %, default 1\").
+        { id: 'targetPct', label: 'Profit target', type: 'number', suffix: '%',
+          min: 0.1, step: 0.25, default: 1 },
+        stopControl(1, [null, 0.5, 1, 2])
       ],
       enter: function (day, ctx, p) {
         if (!ctx.prev) return null;
         var gap = (day.open - ctx.prev.close) / ctx.prev.close * 100;
-        if (gap < numOr(p.gapPct, 2)) return null;
+        if (gap < numOr(p.gapPct, 1)) return null;
         var confirmEnd = MARKET_OPEN_MIN + numOr(p.confirmMin, 30);
         var i = firstBarAtOrAfter(day.bars, confirmEnd);
         if (i === -1) return null;
