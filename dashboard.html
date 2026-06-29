@@ -9,6 +9,58 @@
   <link rel="apple-touch-icon" href="assets/FinanceIcon.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ============================================================
+       Page footer — Career Solutions branding + legal + disclaimer
+       Mirrors the footer on backtester.html so the legal disclaimer
+       is visible on every page of the Finance Dashboard. The legal
+       links open modals injected by js/bt-legal-modals.js (same
+       module used by the Strategy Lab — single source of truth).
+       MOBILE: footer wraps into stacked rows < 600px; tap targets
+       on the legal links stay >= 36px tall.
+       ============================================================ */
+    #bt-footer {
+      margin-top: var(--s-7);
+      padding: var(--s-4) var(--s-5);
+      background: var(--c-brand-dark);
+      color: #DDF5F2;
+      font-size: 12px;
+      border-top: 3px solid var(--c-accent);
+    }
+    #bt-footer .inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center; justify-content: space-between;
+    }
+    #bt-footer .disclaimer {
+      flex: 1 1 100%;
+      color: #FFE2A8;
+      background: rgba(244, 183, 64, 0.10);
+      border-left: 3px solid var(--c-accent);
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      font-weight: 500;
+      line-height: 1.5;
+      margin: 0;
+    }
+    #bt-footer .copy { color: #9FC4C0; }
+    #bt-footer .links { display: flex; flex-wrap: wrap; gap: 14px; }
+    #bt-footer .links a, #bt-footer .links button {
+      color: #DDF5F2; background: transparent; border: 0;
+      cursor: pointer; font-size: 12px;
+      padding: 8px 4px; min-height: 36px;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    #bt-footer .links a:hover, #bt-footer .links button:hover {
+      color: var(--c-grad-2); text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      #bt-footer .inner { gap: 8px; }
+      #bt-footer .links { width: 100%; justify-content: flex-start; }
+    }
+  </style>
 </head>
 <body>
   <header class="app-header">
@@ -325,6 +377,29 @@
 
   <div id="toast-host"></div>
 
+  <!-- ============================================================
+       Page footer — Career Solutions branding + legal disclaimer.
+       Same markup as backtester.html so the "Research and simulation
+       only" notice is visible everywhere in the Finance Dashboard.
+       Legal links are powered by js/bt-legal-modals.js (loaded below).
+       ============================================================ -->
+  <footer id="bt-footer">
+    <div class="inner">
+      <p class="disclaimer">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        &nbsp;<strong>Research and simulation only.</strong>
+        Market data and analytics are informational. This is not financial advice and does not guarantee future performance.
+      </p>
+      <span class="copy">&copy; <span id="bt-footer-year">2026</span> Career Solutions for Today. All rights reserved.</span>
+      <span class="links">
+        <button type="button" data-bt-open="terms">Terms of Use</button>
+        <button type="button" data-bt-open="privacy">Privacy Policy</button>
+        <button type="button" data-bt-open="how-ai">How AI is Used</button>
+        <button type="button" data-bt-open="about">About</button>
+      </span>
+    </div>
+  </footer>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -348,5 +423,16 @@
   <script src="js/calculator.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/app.js"></script>
+  <!-- Legal & About modals (self-contained — powers data-bt-open links in the footer) -->
+  <script src="js/bt-legal-modals.js"></script>
+  <script>
+    // Stamp the current year into the footer. Tiny inline script so we
+    // don't need to load the full bt-header.js (it would conflict with
+    // dashboard.html's existing header/auth wiring).
+    (function () {
+      var el = document.getElementById('bt-footer-year');
+      if (el) el.textContent = new Date().getFullYear();
+    })();
+  </script>
 </body>
 </html>
