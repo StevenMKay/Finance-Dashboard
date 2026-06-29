@@ -5,22 +5,323 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Sign in — Finance Dashboard</title>
   <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- ============================================================
+       Login page styling — scoped overrides, glassy dark theme
+       inspired by the resume builder login. None of these rules
+       leak into dashboard.html or backtester.html.
+       ============================================================ -->
+  <style>
+    :root {
+      --lp-bg-1: #0b1020;
+      --lp-bg-2: #131a35;
+      --lp-bg-3: #1e2a55;
+      --lp-text: #E2E8F0;
+      --lp-text-soft: #94A3B8;
+      --lp-accent-1: #6366F1;  /* indigo */
+      --lp-accent-2: #06B6D4;  /* cyan */
+      --lp-accent-3: #F97316;  /* orange (matches dashboard brand) */
+      --lp-border: rgba(148,163,184,0.18);
+      --lp-border-bright: rgba(148,163,184,0.32);
+      --lp-glass: rgba(255,255,255,0.04);
+      --lp-glass-hi: rgba(255,255,255,0.07);
+      --lp-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--lp-text);
+    }
+
+    /* Animated aurora background. Subtle — doesn't distract from the form. */
+    body {
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(99,102,241,0.35), transparent 60%),
+        radial-gradient(ellipse 70% 55% at 85% 20%, rgba(6,182,212,0.28), transparent 60%),
+        radial-gradient(ellipse 90% 70% at 60% 95%, rgba(249,115,22,0.18), transparent 65%),
+        linear-gradient(180deg, var(--lp-bg-1) 0%, var(--lp-bg-2) 60%, var(--lp-bg-1) 100%);
+      background-attachment: fixed;
+    }
+
+    /* Override the legacy .auth-wrap from css/style.css so the page fills
+       the viewport with our gradient instead of a flat color. */
+    .auth-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+      background: transparent;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--lp-glass);
+      border: 1px solid var(--lp-border);
+      border-radius: 22px;
+      box-shadow: var(--lp-shadow);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Soft top gradient sheen so the card has depth without being heavy. */
+    .auth-card::before {
+      content: '';
+      position: absolute; inset: 0 0 auto 0; height: 110px;
+      background: linear-gradient(180deg, rgba(99,102,241,0.18) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .auth-card .head {
+      text-align: center;
+      padding: 30px 28px 8px;
+      background: transparent;
+      position: relative;
+    }
+
+    /* Gradient brand tile — same recipe the resume builder uses, retuned
+       to the dashboard brand colors (indigo → cyan → orange). */
+    .auth-card .head .brand-icon-wrap {
+      width: 60px; height: 60px; margin: 0 auto 14px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--lp-accent-1) 0%, var(--lp-accent-2) 55%, var(--lp-accent-3) 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 14px 32px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .auth-card .head .brand-icon-wrap i {
+      color: #fff; font-size: 26px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      margin: 0;
+    }
+    /* Hide the legacy inline brand icon — replaced by .brand-icon-wrap. */
+    .auth-card .head > i.brand-icon { display: none; }
+
+    .auth-card .head h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .auth-card .head p {
+      color: var(--lp-text-soft);
+      font-size: 13.5px;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .auth-body {
+      padding: 22px 28px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Sign in / Sign up pill toggle */
+    .auth-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: rgba(15,23,42,0.55);
+      border: 1px solid var(--lp-border);
+      border-radius: 12px;
+      margin-bottom: 4px;
+    }
+    .auth-toggle button {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      color: var(--lp-text-soft);
+      padding: 9px 14px;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+    .auth-toggle button:hover { color: var(--lp-text); }
+    .auth-toggle button.active {
+      background: linear-gradient(135deg, var(--lp-accent-1), var(--lp-accent-2));
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 12px;
+      color: var(--lp-text-soft);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .auth-card .input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 14px;
+      border-radius: 11px;
+      background: rgba(15,23,42,0.65);
+      color: var(--lp-text);
+      border: 1px solid var(--lp-border);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .auth-card .input::placeholder { color: #64748B; }
+    .auth-card .input:focus {
+      outline: none;
+      border-color: var(--lp-accent-2);
+      background: rgba(15,23,42,0.85);
+      box-shadow: 0 0 0 3px rgba(6,182,212,0.22);
+    }
+
+    /* Primary email submit */
+    .auth-card .btn-primary {
+      width: 100%;
+      box-sizing: border-box;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 11px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--lp-accent-1) 0%, var(--lp-accent-2) 100%);
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 12px 28px rgba(99,102,241,0.35);
+      transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+      margin-top: 4px;
+    }
+    .auth-card .btn-primary:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      box-shadow: 0 16px 36px rgba(99,102,241,0.45);
+    }
+    .auth-card .btn-primary:active { transform: translateY(0); }
+
+    /* Divider */
+    .auth-body .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--lp-text-soft);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 6px 0 2px;
+    }
+    .auth-body .divider::before,
+    .auth-body .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--lp-border);
+    }
+
+    /* Google button — clean white card with official multicolor mark */
+    .auth-card .btn-google {
+      width: 100%;
+      box-sizing: border-box;
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: 11px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1F2937;
+      background: #fff;
+      border: 1px solid rgba(255,255,255,0.85);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .auth-card .btn-google:hover {
+      transform: translateY(-1px);
+      background: #fafbff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+    }
+    .auth-card .btn-google:active { transform: translateY(0); }
+    .auth-card .btn-google svg { flex-shrink: 0; }
+
+    /* Status message line */
+    .auth-msg {
+      font-size: 12.5px;
+      min-height: 16px;
+      text-align: center;
+      color: var(--lp-text-soft);
+      padding: 2px 0;
+    }
+    .auth-msg.ok  { color: #34d399; }
+    .auth-msg.err { color: #f87171; }
+
+    /* Tiny footer line with privacy reassurance */
+    .auth-foot {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--lp-text-soft);
+      line-height: 1.5;
+    }
+    .auth-foot i { color: var(--lp-accent-2); margin-right: 4px; }
+
+    @media (max-width: 480px) {
+      .auth-card { border-radius: 18px; }
+      .auth-card .head { padding: 24px 22px 4px; }
+      .auth-card .head h1 { font-size: 21px; }
+      .auth-body { padding: 18px 22px 22px; gap: 12px; }
+      .auth-card .input { padding: 12px 14px; font-size: 15px; }
+      .auth-card .btn-primary,
+      .auth-card .btn-google { padding: 12px 14px; }
+    }
+  </style>
 </head>
 <body>
   <div class="auth-wrap">
     <div class="auth-card">
       <div class="head">
-        <i class="brand-icon fa-solid fa-chart-line"></i>
+        <div class="brand-icon-wrap" aria-hidden="true">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
         <h1>Finance Dashboard</h1>
-        <p>Live markets, holdings, salary planning</p>
+        <p>Live markets, holdings, and salary planning — in one place.</p>
       </div>
       <div class="auth-body">
-        <div class="auth-toggle" role="tablist">
-          <button id="tab-signin" class="active" type="button">Sign in</button>
-          <button id="tab-signup" type="button">Sign up</button>
+        <div class="auth-toggle" role="tablist" aria-label="Choose sign-in mode">
+          <button id="tab-signin" class="active" type="button" role="tab" aria-selected="true">Sign in</button>
+          <button id="tab-signup" type="button" role="tab" aria-selected="false">Sign up</button>
         </div>
+
+        <!-- Google first — most users prefer one-click sign in -->
+        <button id="btn-google" class="btn btn-google" type="button" aria-label="Continue with Google">
+          <!-- Official Google "G" logomark (multi-color SVG) -->
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="divider">or use email</div>
 
         <div class="field">
           <label for="email">Email</label>
@@ -36,14 +337,12 @@
           <span id="submit-label">Sign in</span>
         </button>
 
-        <div class="divider">or</div>
-
-        <button id="btn-google" class="btn btn-google" type="button">
-          <i class="fa-brands fa-google"></i>
-          Continue with Google
-        </button>
-
         <div id="auth-msg" class="auth-msg" aria-live="polite"></div>
+
+        <div class="auth-foot">
+          <i class="fa-solid fa-lock"></i>
+          Encrypted in transit. We never sell your data.
+        </div>
       </div>
     </div>
   </div>
@@ -93,7 +392,7 @@
             await FinanceAuth.signUpEmail(email, pwd);
           }
           showMsg('Success — redirecting…', 'ok');
-          window.location.href = '/dashboard.html';
+          window.location.href = 'dashboard.html';
         } catch (e) {
           showMsg(FinanceAuth.prettyError(e), 'err');
         }
@@ -104,7 +403,7 @@
         try {
           await FinanceAuth.signInGoogle();
           showMsg('Success — redirecting…', 'ok');
-          window.location.href = '/dashboard.html';
+          window.location.href = 'dashboard.html';
         } catch (e) {
           showMsg(FinanceAuth.prettyError(e), 'err');
         }
@@ -112,7 +411,7 @@
 
       // If already signed in, bounce to dashboard
       firebase.auth().onAuthStateChanged(function (u) {
-        if (u) window.location.href = '/dashboard.html';
+        if (u) window.location.href = 'dashboard.html';
       });
     })();
   </script>
