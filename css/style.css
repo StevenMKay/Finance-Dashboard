@@ -68,6 +68,21 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Cyan gradient page background — sits behind the navy header + content.
+   Fixed attachment so it covers the full viewport when the user scrolls. */
+body {
+  background:
+    linear-gradient(135deg,
+      #e0f7fa 0%,
+      #b2ebf2 25%,
+      #80deea 55%,
+      #4dd0e1 85%,
+      #26c6da 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
 a { color: var(--c-blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
 

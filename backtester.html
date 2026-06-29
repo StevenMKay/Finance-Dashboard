@@ -268,15 +268,186 @@
       /* Section headings tighter. */
       .card-head h2 { font-size: 16px; }
     }
+
+    /* ============================================================
+       Menu trigger (top-left chart icon) + slide-in sidebar
+       ============================================================ */
+    .bt-menu-trigger {
+      background: transparent;
+      border: 0;
+      padding: 6px 8px;
+      margin: 0 4px 0 -4px;
+      border-radius: var(--r-sm);
+      color: var(--c-grad-2);
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .bt-menu-trigger:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+    .bt-menu-trigger:focus-visible { outline: 2px solid var(--c-grad-2); outline-offset: 2px; }
+
+    .bt-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(2px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 800;
+    }
+    .bt-backdrop.show { opacity: 1; pointer-events: auto; }
+
+    .bt-sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 280px; max-width: 86vw;
+      background: var(--c-header);
+      color: var(--c-text-onDark);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      z-index: 900;
+      display: flex; flex-direction: column;
+    }
+    .bt-sidebar.show { transform: translateX(0); }
+    .bt-sidebar-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+    }
+    .bt-sidebar-head strong { font-size: 15px; letter-spacing: 0.3px; }
+    .bt-sidebar-close {
+      background: rgba(0,0,0,0.18);
+      border: 0; color: #fff;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .bt-sidebar-close:hover { background: rgba(0,0,0,0.32); }
+    .bt-sidebar nav { padding: 8px 0; flex: 1; overflow-y: auto; }
+    .bt-sidebar nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px;
+      color: #cbd5e1;
+      font-size: 14px; font-weight: 500;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .bt-sidebar nav a i { width: 18px; text-align: center; color: var(--c-grad-2); }
+    .bt-sidebar nav a:hover {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      border-left-color: var(--c-grad-2);
+      text-decoration: none;
+    }
+    .bt-sidebar-foot {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px; color: #94a3b8;
+    }
+
+    /* ============================================================
+       "How to use" button + modal
+       ============================================================ */
+    .bt-howto-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--c-grad-1), var(--c-grad-2));
+      color: #fff;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+    .bt-howto-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.32);
+      filter: brightness(1.06);
+    }
+    .bt-howto-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .bt-modal {
+      position: fixed; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      padding: 16px;
+      z-index: 950;
+    }
+    .bt-modal.show { display: flex; }
+    .bt-modal-card {
+      background: var(--c-card);
+      color: var(--c-text);
+      width: 100%;
+      max-width: 620px;
+      max-height: 86vh;
+      overflow-y: auto;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-2);
+      border: 1px solid var(--c-border);
+      animation: bt-pop 0.2s ease;
+    }
+    @keyframes bt-pop {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .bt-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--c-border-soft);
+      background: linear-gradient(90deg, var(--c-grad-1), var(--c-grad-2), var(--c-grad-3));
+      color: #fff;
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+    }
+    .bt-modal-head h3 { margin: 0; color: #fff; font-size: 16px; }
+    .bt-modal-close {
+      background: rgba(0,0,0,0.18); border: 0; color: #fff;
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .bt-modal-close:hover { background: rgba(0,0,0,0.34); }
+    .bt-modal-body { padding: 16px 20px; font-size: 13px; line-height: 1.6; }
+    .bt-modal-body h4 {
+      margin: 14px 0 6px;
+      font-size: 13px;
+      color: var(--c-text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .bt-modal-body h4 i { color: var(--c-grad-2); }
+    .bt-modal-body h4:first-child { margin-top: 0; }
+    .bt-modal-body p, .bt-modal-body li { color: var(--c-text-soft); }
+    .bt-modal-body ul { margin: 0 0 10px; padding-left: 22px; }
+    .bt-modal-body li { margin-bottom: 4px; }
+    .bt-modal-body code {
+      background: var(--c-bg-soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .bt-howto-btn { padding: 7px 11px; font-size: 11px; }
+      .bt-howto-btn .lbl-full { display: none; }
+    }
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
-      <i class="fa-solid fa-chart-line"></i>
+      <button id="bt-menu-btn" class="bt-menu-trigger" type="button" aria-label="Open menu" aria-controls="bt-sidebar" aria-expanded="false" title="Open menu">
+        <i class="fa-solid fa-chart-line"></i>
+      </button>
       <span>Finance Dashboard</span>
     </div>
     <div class="user">
+      <button id="bt-howto-btn" class="bt-howto-btn" type="button" title="How to use the Strategy Lab">
+        <i class="fa-solid fa-circle-question"></i><span class="lbl-full">How to use</span>
+      </button>
       <a href="dashboard.html" class="btn btn-sm btn-ghost" title="Back to dashboard">
         <i class="fa-solid fa-arrow-left"></i><span>Dashboard</span>
       </a>
@@ -1265,6 +1436,132 @@
   </main>
 
   <div id="toast-host"></div>
+
+  <!-- ============================================================
+       Slide-in sidebar (triggered by the brand icon, top-left)
+       ============================================================ -->
+  <div id="bt-backdrop" class="bt-backdrop" aria-hidden="true"></div>
+  <aside id="bt-sidebar" class="bt-sidebar" role="dialog" aria-label="Navigation menu" aria-modal="true" aria-hidden="true">
+    <div class="bt-sidebar-head">
+      <strong><i class="fa-solid fa-bars"></i> &nbsp;Menu</strong>
+      <button id="bt-sidebar-close" class="bt-sidebar-close" type="button" aria-label="Close menu">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <nav>
+      <a href="#" data-placeholder>
+        <i class="fa-solid fa-link"></i> Placeholder link
+      </a>
+    </nav>
+    <div class="bt-sidebar-foot">More options coming soon.</div>
+  </aside>
+
+  <!-- ============================================================
+       "How to use" modal
+       ============================================================ -->
+  <div id="bt-howto-modal" class="bt-modal" role="dialog" aria-label="How to use the Strategy Lab" aria-modal="true" aria-hidden="true">
+    <div class="bt-modal-card">
+      <div class="bt-modal-head">
+        <h3><i class="fa-solid fa-circle-question"></i> &nbsp;How to use the Strategy Lab</h3>
+        <button id="bt-howto-close" class="bt-modal-close" type="button" aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="bt-modal-body">
+        <p>The Strategy Lab is a sandbox for testing a first-hour trend strategy across multiple tickers. Everything runs in your browser — no orders are placed.</p>
+
+        <h4><i class="fa-solid fa-play"></i> 1. Start on the Engine tab</h4>
+        <ul>
+          <li>Enter one or more tickers (comma-separated, e.g. <code>AMD, NVDA, TSLA</code>).</li>
+          <li>Pick a first-hour window, dip %, profit target(s), and optional stop loss(es).</li>
+          <li>Choose your candle interval and lookback period, then click <strong>Run backtest</strong>.</li>
+        </ul>
+
+        <h4><i class="fa-solid fa-sliders"></i> 2. Optimize parameters</h4>
+        <ul>
+          <li>Open the <strong>Optimizer</strong> tab to grid-search every combination of axes.</li>
+          <li>Use the <strong>Heatmap</strong> tab to visualize dip × target performance for a single ticker.</li>
+        </ul>
+
+        <h4><i class="fa-solid fa-chart-area"></i> 3. Analyze results</h4>
+        <ul>
+          <li><strong>Charts</strong> — equity curve, drawdown, monthly P/L, distributions.</li>
+          <li><strong>Replay</strong> — animate candles for any single trade day.</li>
+          <li><strong>Compare</strong> — side-by-side best parameters for many tickers.</li>
+          <li><strong>Monte Carlo</strong> — bootstrap the trade list to estimate the range of outcomes.</li>
+        </ul>
+
+        <h4><i class="fa-solid fa-sack-dollar"></i> 4. Plan & validate</h4>
+        <ul>
+          <li><strong>Investment Planner</strong> — size positions and estimate monthly income.</li>
+          <li><strong>Signal Quality</strong> — score how reliable the first-hour direction is.</li>
+          <li><strong>Experiments</strong> — sweep timeframes and tune custom strategies.</li>
+          <li><strong>AI Lab</strong> — ask OpenAI to summarize results or build a strategy from plain English (requires server key).</li>
+        </ul>
+
+        <h4><i class="fa-solid fa-triangle-exclamation"></i> Heads up</h4>
+        <p>If you see the "Mock data mode" banner, the server has no Polygon key configured and is returning synthetic candles. Set <code>POLYGON_API_KEY</code> on the server for live history. This tool is for research only — not trading advice.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar + How-to modal wiring. Self-contained, no external deps.
+    (function () {
+      const menuBtn      = document.getElementById('bt-menu-btn');
+      const sidebar      = document.getElementById('bt-sidebar');
+      const backdrop     = document.getElementById('bt-backdrop');
+      const sidebarClose = document.getElementById('bt-sidebar-close');
+      const howtoBtn     = document.getElementById('bt-howto-btn');
+      const howtoModal   = document.getElementById('bt-howto-modal');
+      const howtoClose   = document.getElementById('bt-howto-close');
+
+      function openSidebar() {
+        sidebar.classList.add('show');
+        backdrop.classList.add('show');
+        sidebar.setAttribute('aria-hidden', 'false');
+        menuBtn.setAttribute('aria-expanded', 'true');
+      }
+      function closeSidebar() {
+        sidebar.classList.remove('show');
+        sidebar.setAttribute('aria-hidden', 'true');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        if (!howtoModal.classList.contains('show')) backdrop.classList.remove('show');
+      }
+      function openHowto() {
+        howtoModal.classList.add('show');
+        backdrop.classList.add('show');
+        howtoModal.setAttribute('aria-hidden', 'false');
+      }
+      function closeHowto() {
+        howtoModal.classList.remove('show');
+        howtoModal.setAttribute('aria-hidden', 'true');
+        if (!sidebar.classList.contains('show')) backdrop.classList.remove('show');
+      }
+
+      if (menuBtn)      menuBtn.addEventListener('click', openSidebar);
+      if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+      if (howtoBtn)     howtoBtn.addEventListener('click', openHowto);
+      if (howtoClose)   howtoClose.addEventListener('click', closeHowto);
+
+      if (backdrop) backdrop.addEventListener('click', function () {
+        closeSidebar();
+        closeHowto();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (sidebar.classList.contains('show')) closeSidebar();
+          if (howtoModal.classList.contains('show')) closeHowto();
+        }
+      });
+
+      // Close the modal if user clicks the dark area outside the card.
+      howtoModal.addEventListener('click', function (e) {
+        if (e.target === howtoModal) closeHowto();
+      });
+    })();
+  </script>
 
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
