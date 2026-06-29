@@ -398,6 +398,9 @@
       $('#bt-export-csv').disabled = trades.length === 0;
       // Keep Investment Planner selectors in sync so the user can size up immediately.
       refreshInvestmentPlannerTab();
+      // Refresh the searchable ticker chip picker on the Experiments tab
+      // now that we know which tickers have candles loaded.
+      try { refreshXpTickerPicker(); } catch (e) { /* picker may not be in DOM yet */ }
     }).catch(function (err) {
       console.error('Engine run failed:', err);
       showError('Engine run failed: ' + (err.message || err));
@@ -1950,6 +1953,99 @@
     });
     $('#bt-xp-csv-trades').addEventListener('click', function () {
       downloadCsv(BTExperiments.exportCsv(xpState.leaderboard, 'trades'), 'experiment-trades.csv');
+    });
+
+    // -----------------------------------------------------------------
+    // Searchable ticker picker (chip rail under #bt-xp-tickers).
+    // The picker is page-local UI — the actual list of tickers always
+    // comes from state.engineResult.candlesByTicker so a user can never
+    // ask the experiment to use a ticker that has no candles.
+    // -----------------------------------------------------------------
+    var xpSearch = $('#bt-xp-ticker-search');
+    var xpInput = $('#bt-xp-tickers');
+    var xpAllBtn = $('#bt-xp-ticker-all');
+    var xpNoneBtn = $('#bt-xp-ticker-clear');
+    if (xpSearch) xpSearch.addEventListener('input', refreshXpTickerPicker);
+    if (xpInput) xpInput.addEventListener('input', refreshXpTickerPicker);
+    if (xpAllBtn) xpAllBtn.addEventListener('click', function () {
+      var avail = xpAvailableTickers();
+      if (!avail.length || !xpInput) return;
+      xpInput.value = avail.join(', ');
+      refreshXpTickerPicker();
+    });
+    if (xpNoneBtn) xpNoneBtn.addEventListener('click', function () {
+      if (!xpInput) return;
+      xpInput.value = '';
+      refreshXpTickerPicker();
+    });
+    refreshXpTickerPicker();
+  }
+
+  // -------------------------------------------------------------------
+  // Helpers for the searchable ticker picker on the Experiments tab.
+  // Kept tiny and DOM-defensive so they no-op if the picker markup is
+  // ever removed from backtester.html.
+  // -------------------------------------------------------------------
+  function xpAvailableTickers() {
+    if (!state.engineResult || !state.engineResult.candlesByTicker) return [];
+    return Object.keys(state.engineResult.candlesByTicker).sort();
+  }
+  function xpParseTickers(raw) {
+    if (!raw) return [];
+    return raw.split(/[,\s]+/)
+      .map(function (s) { return s.trim().toUpperCase(); })
+      .filter(Boolean);
+  }
+  function xpToggleTicker(ticker) {
+    var input = document.getElementById('bt-xp-tickers');
+    if (!input) return;
+    var current = xpParseTickers(input.value);
+    var idx = current.indexOf(ticker);
+    if (idx === -1) current.push(ticker);
+    else current.splice(idx, 1);
+    input.value = current.join(', ');
+    refreshXpTickerPicker();
+  }
+  function refreshXpTickerPicker() {
+    var picker = document.getElementById('bt-xp-ticker-picker');
+    var chipsBox = document.getElementById('bt-xp-ticker-chips');
+    var emptyMsg = document.getElementById('bt-xp-ticker-empty');
+    var searchEl = document.getElementById('bt-xp-ticker-search');
+    var input = document.getElementById('bt-xp-tickers');
+    if (!picker || !chipsBox || !input) return;
+
+    var available = xpAvailableTickers();
+    if (!available.length) {
+      chipsBox.innerHTML = '';
+      if (emptyMsg) emptyMsg.style.display = '';
+      return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    var q = ((searchEl && searchEl.value) || '').trim().toUpperCase();
+    var current = xpParseTickers(input.value);
+    var currentSet = {};
+    current.forEach(function (t) { currentSet[t] = true; });
+
+    chipsBox.innerHTML = '';
+    var matches = available.filter(function (t) { return !q || t.indexOf(q) !== -1; });
+    if (!matches.length) {
+      var none = document.createElement('span');
+      none.className = 'muted';
+      none.style.fontSize = '11px';
+      none.textContent = 'No tickers match "' + q + '".';
+      chipsBox.appendChild(none);
+      return;
+    }
+    matches.forEach(function (t) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'bt-chip' + (currentSet[t] ? ' on' : '');
+      chip.textContent = t;
+      chip.setAttribute('data-ticker', t);
+      chip.setAttribute('aria-pressed', currentSet[t] ? 'true' : 'false');
+      chip.addEventListener('click', function () { xpToggleTicker(t); });
+      chipsBox.appendChild(chip);
     });
   }
 

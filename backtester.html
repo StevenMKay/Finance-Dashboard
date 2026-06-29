@@ -84,6 +84,39 @@
     }
     .bt-chip-remove { font-size: 10px; opacity: 0.8; }
 
+    /* Searchable ticker picker on the Experiments tab — chip rail of
+       tickers currently loaded by the Engine, with a small search box.
+       Click a chip to toggle the ticker in the comma-separated text
+       input above. Active chips reuse .bt-chip.on styling. */
+    .bt-xp-ticker-picker {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: var(--c-bg-soft);
+      border: 1px solid var(--c-border);
+      border-radius: var(--r-sm);
+    }
+    .bt-xp-tp-head {
+      display: flex; gap: 6px; align-items: center;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .bt-xp-tp-head .input {
+      flex: 1 1 160px;
+      min-width: 0;
+      padding: 7px 10px;
+      font-size: 12px;
+      height: auto;
+    }
+    .bt-xp-tp-chips {
+      max-height: 144px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 4px;
+    }
+    .bt-xp-tp-empty {
+      padding: 6px 2px 0;
+      font-style: italic;
+    }
+
     .bt-progress {
       width: 100%; height: 10px; background: var(--c-bg-soft);
       border-radius: 999px; overflow: hidden;
@@ -1636,8 +1669,25 @@
             <div class="muted" id="bt-xp-summary" style="font-size:11px; margin-top:4px;"></div>
           </div>
           <div class="field" style="grid-column: 1 / -1;">
-            <label>Tickers (defaults to your Engine tickers)</label>
-            <input id="bt-xp-tickers" class="input" type="text" placeholder="AMD, NVDA, TSLA" />
+            <label for="bt-xp-tickers">Tickers (defaults to your Engine tickers)</label>
+            <input id="bt-xp-tickers" class="input" type="text" placeholder="AMD, NVDA, TSLA" autocomplete="off" />
+            <!--
+              Searchable ticker chip picker. Populated by refreshXpTickerPicker()
+              in js/backtester.js from state.engineResult.candlesByTicker. Click a
+              chip to toggle its ticker in the input above. Filter by typing into
+              the search box. Hidden until Engine has been run.
+            -->
+            <div id="bt-xp-ticker-picker" class="bt-xp-ticker-picker">
+              <div class="bt-xp-tp-head">
+                <input id="bt-xp-ticker-search" class="input" type="search" placeholder="Search tickers…" autocomplete="off" aria-label="Search loaded tickers" />
+                <button type="button" class="btn btn-sm btn-ghost" id="bt-xp-ticker-all" title="Select all loaded tickers">All</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="bt-xp-ticker-clear" title="Clear the ticker input">None</button>
+              </div>
+              <div id="bt-xp-ticker-chips" class="bt-chips bt-xp-tp-chips" role="group" aria-label="Available tickers"></div>
+              <div class="bt-xp-tp-empty muted" id="bt-xp-ticker-empty" style="display:none; font-size:11px;">
+                No tickers loaded yet — run the <strong>Engine</strong> tab first.
+              </div>
+            </div>
           </div>
         </div>
 
