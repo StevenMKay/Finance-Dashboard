@@ -373,6 +373,56 @@
     }
     .bt-howto-btn:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
 
+    /* ------------------------------------------------------------
+       "Dashboard" back button — outlined sibling of .bt-howto-btn.
+       Always visible in the header so users can leave the Strategy
+       Lab in one tap. MOBILE (< 480px): .lbl-full hides; the house
+       icon stays. min-height 36px keeps it tappable on phones.
+       The brand text on the left is also a link, but it is hidden
+       on phones (.app-header .brand span { display:none }) so this
+       pill is the mobile escape hatch.
+       ------------------------------------------------------------ */
+    .bt-home-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: #fff;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.3px;
+      text-decoration: none;
+      cursor: pointer;
+      min-height: 36px;
+      transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    }
+    .bt-home-btn:hover {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.38);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: #fff;
+    }
+    .bt-home-btn:focus-visible {
+      outline: 2px solid var(--c-accent);
+      outline-offset: 2px;
+    }
+
+    /* Brand text link (desktop only — hidden on phones via
+       css/style.css .app-header .brand span rule). Keeps the logo
+       click → home convention without disturbing the menu trigger. */
+    .bt-brand-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .bt-brand-link:hover { color: var(--c-accent); text-decoration: none; }
+    .bt-brand-link:focus-visible {
+      outline: 2px solid var(--c-accent);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
     .bt-modal {
       position: fixed; inset: 0;
       display: none; align-items: center; justify-content: center;
@@ -433,6 +483,10 @@
     @media (max-width: 480px) {
       .bt-howto-btn { padding: 7px 11px; font-size: 11px; }
       .bt-howto-btn .lbl-full { display: none; }
+      /* Match the howto pill so the icon-only row stays balanced and
+         the two buttons fit alongside the avatar at 360px width. */
+      .bt-home-btn { padding: 7px 11px; font-size: 11px; min-width: 36px; justify-content: center; }
+      .bt-home-btn .lbl-full { display: none; }
     }
 
     /* ============================================================
@@ -624,9 +678,23 @@
       <button id="bt-menu-btn" class="bt-menu-trigger" type="button" aria-label="Open menu" aria-controls="bt-sidebar" aria-expanded="false" title="Open menu">
         <i class="fa-solid fa-chart-line"></i>
       </button>
-      <span>Finance Dashboard</span>
+      <!--
+        Brand text doubles as a home link on desktop. The <span> rule in
+        css/style.css hides this on phones — that's why an explicit
+        "Dashboard" pill also lives in the .user group below.
+      -->
+      <a class="bt-brand-link" href="dashboard.html" title="Back to Finance Dashboard"><span>Finance Dashboard</span></a>
     </div>
     <div class="user">
+      <!--
+        "Back to Dashboard" pill — primary escape hatch from the Strategy
+        Lab. Always visible. On phones (< 480px) the label hides and only
+        the house icon shows so it stays tappable next to the avatar.
+        Using <a> (not <button>) so middle-click / right-click work too.
+      -->
+      <a id="bt-home-btn" class="bt-home-btn" href="dashboard.html" aria-label="Back to Finance Dashboard" title="Back to Finance Dashboard">
+        <i class="fa-solid fa-house" aria-hidden="true"></i><span class="lbl-full">Dashboard</span>
+      </a>
       <!--
         "How to use" pill — opens #bt-howto-modal. Same modal is also
         reachable from the sidebar and the account dropdown so beginners
