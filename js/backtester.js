@@ -43,7 +43,7 @@
     state.user = user;
     $('#hdr-email').textContent = user.email || user.displayName || 'Signed in';
     $('#btn-signout').addEventListener('click', function () {
-      FinanceAuth.signOut().then(function () { window.location.href = '/index.html'; });
+      FinanceAuth.signOut().then(function () { window.location.href = 'index.html'; });
     });
 
     // 1) Engine self-test
@@ -501,7 +501,7 @@
   function runInWorker(payload, settings, candlesByTicker) {
     try {
       if (state.worker) { try { state.worker.terminate(); } catch (e) {} }
-      state.worker = new Worker('/js/backtester-worker.js');
+      state.worker = new Worker('js/backtester-worker.js');
     } catch (e) {
       console.warn('Worker construction failed, falling back:', e);
       $('#bt-opt-fallback').style.display = '';
@@ -915,7 +915,7 @@
 
       if (state.workerSupported) {
         try {
-          var w = new Worker('/js/backtester-worker.js');
+          var w = new Worker('js/backtester-worker.js');
           w.onmessage = function (e) {
             var m = e.data;
             if (m.type === 'progress') updateProgress(m.done, m.total, m.ticker || '');

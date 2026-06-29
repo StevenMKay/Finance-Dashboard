@@ -35,7 +35,7 @@
   function requireAuth(onUser) {
     firebase.auth().onAuthStateChanged(function (user) {
       if (!user) {
-        window.location.href = '/index.html';
+        window.location.href = 'index.html';
         return;
       }
       onUser(user);

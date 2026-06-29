@@ -15,7 +15,7 @@
  * Cancellation is handled by terminating the worker from the main thread.
  * ------------------------------------------------------------------ */
 
-importScripts('/js/backtester-engine.js');
+importScripts('backtester-engine.js');
 
 self.onmessage = function (e) {
   var msg = e.data || {};

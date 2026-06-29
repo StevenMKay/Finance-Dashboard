@@ -22,7 +22,7 @@
     // Header email + sign-out
     FU.$('#hdr-email').textContent = user.email || user.displayName || 'Signed in';
     FU.$('#btn-signout').addEventListener('click', function () {
-      FinanceAuth.signOut().then(function () { window.location.href = '/index.html'; });
+      FinanceAuth.signOut().then(function () { window.location.href = 'index.html'; });
     });
 
     FinanceStore.init(user);
